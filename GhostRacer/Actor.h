@@ -7,42 +7,55 @@
 
 class Actor : public GraphObject {
 public:
-	Actor();
+	Actor(int imageID, double x, double y, int dir, double size, unsigned int depth, 
+		double xSpeed, double ySpeed, bool collisionAvoidanceWorthy);
 	virtual void doSomething() = 0;
 	bool alive() {
 		return m_alive;
 	}
 private:
+	double m_xSpeed;
+	double m_ySpeed;
 	bool m_alive;
+	bool m_collisionAvoidanceWorthy;
 };
 
-class GhostRacer : public Actor {
+class HPActor : public Actor {
+public:
+	HPActor(int imageID, double x, double y, int dir, double size, unsigned int depth, 
+		double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy);
+	virtual void doSomething() = 0;
+	int hp() {
+		return m_hp;
+	}
+	void takeDamage(int damage) {
+		m_hp -= damage;
+		// TODO: maybe add `if m_hp <= 0`
+	}
+private:
+	int m_hp;
+};
+
+class GhostRacer : public HPActor {
 public:
 	GhostRacer(double x, double y);
 	virtual void doSomething();
+private:
+	int m_sprays;
 };
-
-class WhiteBorderLine;
 
 class BorderLine : public Actor {
 public:
-	BorderLine(double x, double y);
+	enum class Color { yellow, white };
+	BorderLine(double x, double y, Color color);
 	virtual void doSomething();
 	static double lastWhiteBorderLineY() {
-		return lastWhiteBorderLine->getY();
+		if (m_lastWhiteBorderLine != nullptr)
+			return BorderLine::m_lastWhiteBorderLine->getY();
+		return 0;
 	}
-protected:
-	static WhiteBorderLine* lastWhiteBorderLine;
-};
-
-class YellowBorderLine : public BorderLine {
-public:
-	YellowBorderLine(double x, double y);
-};
-
-class WhiteBorderLine : public BorderLine {
-public:
-	WhiteBorderLine(double x, double y);
+private:
+	static BorderLine* m_lastWhiteBorderLine;
 };
 
 #endif // ACTOR_H_

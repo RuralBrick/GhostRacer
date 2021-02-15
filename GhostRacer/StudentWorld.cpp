@@ -20,6 +20,7 @@ StudentWorld::~StudentWorld() {
     cleanUp();
 }
 
+#pragma region Required Functions
 int StudentWorld::init()
 {
     m_player = new GhostRacer(128, 32);
@@ -27,12 +28,13 @@ int StudentWorld::init()
     double LEFT_EDGE = ROAD_CENTER - ROAD_WIDTH / 2.0;
     double RIGHT_EDGE = ROAD_CENTER + ROAD_WIDTH / 2.0;
     for (int j = 0; j < N; ++j) {
-        m_actors.push_back(new YellowBorderLine(LEFT_EDGE, j * SPRITE_HEIGHT));
+        m_actors.push_back(new BorderLine(LEFT_EDGE, j * SPRITE_HEIGHT, BorderLine::Color::yellow));
+        m_actors.push_back(new BorderLine(RIGHT_EDGE, j * SPRITE_HEIGHT, BorderLine::Color::yellow));
     }
     int M = VIEW_HEIGHT / (4 * SPRITE_HEIGHT);
     for (int j = 0; j < M; ++j) {
-        m_actors.push_back(new WhiteBorderLine(LEFT_EDGE + ROAD_WIDTH / 3.0, j * (4.0 * SPRITE_HEIGHT)));
-        m_actors.push_back(new WhiteBorderLine(RIGHT_EDGE - ROAD_WIDTH / 3.0, j * (4.0 * SPRITE_HEIGHT)));
+        m_actors.push_back(new BorderLine(LEFT_EDGE + ROAD_WIDTH / 3.0, j * (4.0 * SPRITE_HEIGHT), BorderLine::Color::white));
+        m_actors.push_back(new BorderLine(RIGHT_EDGE - ROAD_WIDTH / 3.0, j * (4.0 * SPRITE_HEIGHT), BorderLine::Color::white));
     }
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -85,16 +87,19 @@ void StudentWorld::cleanUp()
         it = m_actors.erase(it);
     }
 }
+#pragma endregion Required Functions
 
+#pragma region Add Functions
 void StudentWorld::addRoadMarkers() {
     double new_border_y = VIEW_HEIGHT - SPRITE_HEIGHT;
     double delta_y = new_border_y - BorderLine::lastWhiteBorderLineY();
     if (delta_y >= SPRITE_HEIGHT) {
-        m_actors.push_back(new YellowBorderLine(ROAD_CENTER - ROAD_WIDTH / 2.0, new_border_y));
-        m_actors.push_back(new YellowBorderLine(ROAD_CENTER + ROAD_WIDTH / 2.0, new_border_y));
+        m_actors.push_back(new BorderLine(ROAD_CENTER - ROAD_WIDTH / 2.0, new_border_y, BorderLine::Color::yellow));
+        m_actors.push_back(new BorderLine(ROAD_CENTER + ROAD_WIDTH / 2.0, new_border_y, BorderLine::Color::yellow));
     }
     if (delta_y >= 4.0 * SPRITE_HEIGHT) {
-        m_actors.push_back(new WhiteBorderLine(ROAD_CENTER - ROAD_WIDTH / 2.0 + ROAD_WIDTH / 3.0, new_border_y));
-        m_actors.push_back(new WhiteBorderLine(ROAD_CENTER + ROAD_WIDTH / 2.0 - ROAD_WIDTH / 3.0, new_border_y));
+        m_actors.push_back(new BorderLine(ROAD_CENTER - ROAD_WIDTH / 2.0 + ROAD_WIDTH / 3.0, new_border_y, BorderLine::Color::white));
+        m_actors.push_back(new BorderLine(ROAD_CENTER + ROAD_WIDTH / 2.0 - ROAD_WIDTH / 3.0, new_border_y, BorderLine::Color::white));
     }
 }
+#pragma endregion Add Functions
