@@ -8,6 +8,7 @@
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
 class Actor;
+class GhostRacer;
 
 class StudentWorld : public GameWorld
 {
@@ -17,9 +18,9 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-
+    double getGhostRacerVertSpeed() const;
 private:
-    Actor* m_player;
+    GhostRacer* m_player;
     std::list<Actor*> m_actors;
     void addRoadMarkers();
     //void addZombieCabs();

@@ -5,14 +5,36 @@
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
+class StudentWorld;
+
 class Actor : public GraphObject {
 public:
-	Actor(int imageID, double x, double y, int dir, double size, unsigned int depth, 
+	Actor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth, 
 		double xSpeed, double ySpeed, bool collisionAvoidanceWorthy);
 	virtual void doSomething() = 0;
-	bool alive() {
+	double getXSpeed() const {
+		return m_xSpeed;
+	}
+	double getYSpeed() const {
+		return m_ySpeed;
+	}
+	void setXSpeed(double speed) {
+		m_xSpeed = speed;
+	}
+	void setYSpeed(double speed) {
+		m_ySpeed = speed;
+	}
+	void adjustXSpeed(double speed) {
+		m_xSpeed += speed;
+	}
+	void adjustYSpeed(double speed) {
+		m_ySpeed += speed;
+	}
+	bool alive() const {
 		return m_alive;
 	}
+protected:
+	StudentWorld* m_sw;
 private:
 	double m_xSpeed;
 	double m_ySpeed;
@@ -22,10 +44,10 @@ private:
 
 class HPActor : public Actor {
 public:
-	HPActor(int imageID, double x, double y, int dir, double size, unsigned int depth, 
+	HPActor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth, 
 		double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy);
 	virtual void doSomething() = 0;
-	int hp() {
+	int hp() const {
 		return m_hp;
 	}
 	void takeDamage(int damage) {
@@ -38,16 +60,17 @@ private:
 
 class GhostRacer : public HPActor {
 public:
-	GhostRacer(double x, double y);
+	GhostRacer(StudentWorld* sw, double x, double y);
 	virtual void doSomething();
 private:
 	int m_sprays;
+	void move();
 };
 
 class BorderLine : public Actor {
 public:
 	enum class Color { yellow, white };
-	BorderLine(double x, double y, Color color);
+	BorderLine(StudentWorld* sw, double x, double y, Color color);
 	virtual void doSomething();
 	static double lastWhiteBorderLineY() {
 		if (m_lastWhiteBorderLine != nullptr)
