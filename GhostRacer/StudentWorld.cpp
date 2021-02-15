@@ -64,12 +64,12 @@ int StudentWorld::move()
 
     /* Add new actors */
     addRoadMarkers();
-    addZombieCabs();
-    addOilSlicks();
-    addZombiePeds();
-    addHumanPeds();
-    addHolyWaterRefillGoodies();
-    addLostSoulGoodies();
+    //addZombieCabs();
+    //addOilSlicks();
+    //addZombiePeds();
+    //addHumanPeds();
+    //addHolyWaterRefillGoodies();
+    //addLostSoulGoodies();
 
     /* Update display text */
 

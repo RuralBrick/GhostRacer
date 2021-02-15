@@ -22,12 +22,12 @@ private:
     Actor* m_player;
     std::list<Actor*> m_actors;
     void addRoadMarkers();
-    void addZombieCabs();
-    void addOilSlicks();
-    void addZombiePeds();
-    void addHumanPeds();
-    void addHolyWaterRefillGoodies();
-    void addLostSoulGoodies();
+    //void addZombieCabs();
+    //void addOilSlicks();
+    //void addZombiePeds();
+    //void addHumanPeds();
+    //void addHolyWaterRefillGoodies();
+    //void addLostSoulGoodies();
 };
 
 #endif // STUDENTWORLD_H_
