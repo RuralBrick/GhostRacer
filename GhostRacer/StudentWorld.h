@@ -18,17 +18,28 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    void incSouls() { ++m_souls; }
+    void decSouls() { --m_souls; }
     double getGhostRacerVertSpeed() const;
+    bool checkOverlappingGhostRacer(const Actor* other) const;
+    void spinGhostRacer();
+    void healGhostRacer(int health);
+    void rechargeGhostRacer(int sprays);
 private:
     GhostRacer* m_player;
     std::list<Actor*> m_actors;
+    const int LEFT_EDGE = ROAD_CENTER - ROAD_WIDTH / 2;
+    const int RIGHT_EDGE = ROAD_CENTER + ROAD_WIDTH / 2;
+    const int LANE_WIDTH = ROAD_WIDTH / 3;
+    int m_souls;
+    bool checkOverlap(const Actor* a1, const Actor* a2) const;
     void addRoadMarkers();
     //void addZombieCabs();
-    //void addOilSlicks();
+    void addOilSlicks();
     //void addZombiePeds();
     //void addHumanPeds();
-    //void addHolyWaterRefillGoodies();
-    //void addLostSoulGoodies();
+    void addHolyWaterRefillGoodies();
+    void addLostSoulGoodies();
 };
 
 #endif // STUDENTWORLD_H_
