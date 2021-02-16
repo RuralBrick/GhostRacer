@@ -11,7 +11,7 @@ Actor::Actor(StudentWorld* sw, int imageID, double x, double y, int dir, double 
 	double xSpeed, double ySpeed, bool collisionAvoidanceWorthy)
 	: GraphObject(imageID, x, y, dir, size, depth), 
 	m_sw(sw), m_xSpeed(xSpeed), m_ySpeed(ySpeed), m_alive(true), 
-	m_collisionAvoidanceWorthy(collisionAvoidanceWorthy) { }
+	m_collisionAvoidanceWorthy(collisionAvoidanceWorthy) {}
 
 bool Actor::isOutOfBounds() const {
 	if (GraphObject::getX() < 0 || GraphObject::getX() > VIEW_WIDTH
@@ -43,7 +43,7 @@ void Actor::die() {
 HPActor::HPActor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth,
 	double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy)
 	: Actor(sw, imageID, x, y, dir, size, depth, xSpeed, ySpeed, collisionAvoidanceWorthy),
-	m_hp(hp) { }
+	m_hp(hp) {}
 
 void HPActor::takeDamage(int damage) {
 	m_hp -= damage;
@@ -57,7 +57,7 @@ void HPActor::takeDamage(int damage) {
 #pragma region GhostRacer
 GhostRacer::GhostRacer(StudentWorld* sw, double x, double y)
 	: HPActor(sw, IID_GHOST_RACER, x, y, 90, 4.0, 0, 0.0, 0.0, 100, true),
-	m_sprays(10) { }
+	m_sprays(10) {}
 
 void GhostRacer::move() {
 	const double max_shift_per_tick = 4.0;
@@ -119,7 +119,6 @@ void GhostRacer::healDamage(int hp) {
 }
 
 void GhostRacer::spin() {
-	//TODO: can we use c++17 features?
 	int newDir = GraphObject::getDirection();
 	if (randInt(0, 1) == 0)
 		newDir -= randInt(5, 20);
@@ -150,8 +149,8 @@ double BorderLine::getLastWhiteBorderLineY() {
 #pragma endregion BorderLine
 
 #pragma region Item
-Item::Item(StudentWorld* sw, int iid, double x, double y, double size, unsigned int depth)
-	: Actor(sw, iid, x, y, 0, size, depth, 0.0, -4.0, false) { }
+Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size, unsigned int depth)
+	: Actor(sw, iid, x, y, dir, size, depth, 0.0, -4.0, false) {}
 
 void Item::doSomething() {
 	Actor::doSomething();
@@ -161,8 +160,8 @@ void Item::doSomething() {
 #pragma endregion Item
 
 #pragma region Goodie
-Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, double size)
-	: Item(sw, iid, x, y, size, 2) { }
+Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size)
+	: Item(sw, iid, x, y, dir, size, 2) {}
 
 void Goodie::interactWithGhostRacer() {
 	Actor::die();
@@ -172,7 +171,7 @@ void Goodie::interactWithGhostRacer() {
 
 #pragma region OilSlick
 OilSlick::OilSlick(StudentWorld* sw, double x, double y)
-	: Item(sw, IID_OIL_SLICK, x, y, randInt(2, 5), 1) { }
+	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5), 1) {}
 
 void OilSlick::interactWithGhostRacer() {
 	m_sw->playSound(SOUND_OIL_SLICK);
@@ -182,7 +181,7 @@ void OilSlick::interactWithGhostRacer() {
 
 #pragma region HealingGoodie
 HealingGoodie::HealingGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_HEAL_GOODIE, x, y, 1.0) { }
+	: Goodie(sw, IID_HEAL_GOODIE, x, y, 0, 1.0) {}
 
 void HealingGoodie::interactWithGhostRacer() {
 	m_sw->healGhostRacer(10);
@@ -193,7 +192,7 @@ void HealingGoodie::interactWithGhostRacer() {
 
 #pragma region HolyWaterGoodie
 HolyWaterGoodie::HolyWaterGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_HOLY_WATER_GOODIE, x, y, 2.0) { }
+	: Goodie(sw, IID_HOLY_WATER_GOODIE, x, y, 90, 2.0) {}
 
 void HolyWaterGoodie::interactWithGhostRacer() {
 	m_sw->rechargeGhostRacer(10);
@@ -204,10 +203,10 @@ void HolyWaterGoodie::interactWithGhostRacer() {
 
 #pragma region SoulGoodie
 SoulGoodie::SoulGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_SOUL_GOODIE, x, y, 4.0) { }
+	: Goodie(sw, IID_SOUL_GOODIE, x, y, 0, 4.0) {}
 
 void SoulGoodie::interactWithGhostRacer() {
-	m_sw->incSouls();
+	m_sw->saveSoul();
 	Actor::die();
 	m_sw->playSound(SOUND_GOT_SOUL);
 	m_sw->increaseScore(100);

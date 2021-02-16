@@ -18,8 +18,7 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    void incSouls() { ++m_souls; }
-    void decSouls() { --m_souls; }
+    void saveSoul() { --m_soulsToSave; }
     double getGhostRacerVertSpeed() const;
     bool checkOverlappingGhostRacer(const Actor* other) const;
     void spinGhostRacer();
@@ -31,7 +30,8 @@ private:
     const int LEFT_EDGE = ROAD_CENTER - ROAD_WIDTH / 2;
     const int RIGHT_EDGE = ROAD_CENTER + ROAD_WIDTH / 2;
     const int LANE_WIDTH = ROAD_WIDTH / 3;
-    int m_souls;
+    int m_soulsToSave;
+    int m_bonus;
     bool checkOverlap(const Actor* a1, const Actor* a2) const;
     void addRoadMarkers();
     //void addZombieCabs();

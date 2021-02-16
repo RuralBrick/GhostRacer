@@ -7,6 +7,7 @@
 #include <algorithm>
 using namespace std;
 
+#pragma region Instantiation
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -15,18 +16,20 @@ GameWorld* createStudentWorld(string assetPath)
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-: GameWorld(assetPath), m_player(nullptr), m_souls(0)
+: GameWorld(assetPath), m_player(nullptr), m_soulsToSave(0), m_bonus(0)
 {
 }
 
 StudentWorld::~StudentWorld() {
     cleanUp();
 }
+#pragma endregion Instantiation
 
 #pragma region Required Functions
 int StudentWorld::init()
 {
-    m_souls = 0;
+    m_soulsToSave = calcSoulsToSave();
+    m_bonus = 5000;
     m_player = new GhostRacer(this, 128, 32);
     int N = VIEW_HEIGHT / SPRITE_HEIGHT;
     for (int j = 0; j < N; ++j) {
@@ -49,11 +52,11 @@ int StudentWorld::move()
         if (actor->isAlive())
             actor->doSomething();
         if (!m_player->isAlive()) {
-            GameWorld::decLives(); // TOOD: have to decLives()?
+            GameWorld::decLives();
             return GWSTATUS_PLAYER_DIED;
         }
-        if (m_souls >= calcSoulsToSave()) {
-            increaseScore(0 /*extra points*/); // TODO: bonus points
+        if (m_soulsToSave <= 0) {
+            increaseScore(m_bonus);
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
@@ -79,6 +82,8 @@ int StudentWorld::move()
 
     /* Update display text */
     updateDisplayText();
+    if (m_bonus > 0)
+        --m_bonus;
 
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -160,6 +165,7 @@ void StudentWorld::addLostSoulGoodies() {
 }
 #pragma endregion Add Functions
 
+#pragma region Other Private Functions
 int StudentWorld::calcSoulsToSave() const {
     return 2 * GameWorld::getLevel() + 5;
 }
@@ -168,10 +174,11 @@ void StudentWorld::updateDisplayText() {
     ostringstream displayOut;
     displayOut << "Score: " << GameWorld::getScore();
     displayOut << "  Lvl: " << GameWorld::getLevel();
-    displayOut << "  Souls2Save: " << calcSoulsToSave();
+    displayOut << "  Souls2Save: " << m_soulsToSave;
     displayOut << "  Lives: " << GameWorld::getLives();
     displayOut << "  Health: " << m_player->getHp();
     displayOut << "  Sprays: " << m_player->getSprays();
-    displayOut << "  Bonus: "; // TODO: display bonus
+    displayOut << "  Bonus: " << m_bonus;
     GameWorld::setGameStatText(displayOut.str());
 }
+#pragma endregion Other Private Functions

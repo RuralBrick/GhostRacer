@@ -73,14 +73,14 @@ private:
 
 class Item : public Actor {
 public:
-	Item(StudentWorld* sw, int iid, double x, double y, double size, unsigned int depth);
+	Item(StudentWorld* sw, int iid, double x, double y, int dir, double size, unsigned int depth);
 	virtual void doSomething();
 	virtual void interactWithGhostRacer() = 0;
 };
 
 class Goodie : public Item {
 public:
-	Goodie(StudentWorld* sw, int iid, double x, double y, double size);
+	Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size);
 	virtual void interactWithGhostRacer() = 0;
 };
 
