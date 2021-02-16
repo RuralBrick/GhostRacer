@@ -52,6 +52,7 @@ public:
 	virtual void die();
 	virtual void doDamageEffect() {}
 	void healDamage(int health);
+	int getSprays() { return m_sprays; }
 	void addSprays(int sprays) { m_sprays += sprays; }
 	void spin();
 private:

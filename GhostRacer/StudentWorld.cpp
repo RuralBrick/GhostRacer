@@ -2,6 +2,7 @@
 #include "GameConstants.h"
 #include "Actor.h"
 #include <string>
+#include <sstream>
 #include <stdlib.h>
 #include <algorithm>
 using namespace std;
@@ -47,10 +48,12 @@ int StudentWorld::move()
     for (auto actor : m_actors) {
         if (actor->isAlive())
             actor->doSomething();
-        if (!m_player->isAlive())
+        if (!m_player->isAlive()) {
+            GameWorld::decLives(); // TOOD: have to decLives()?
             return GWSTATUS_PLAYER_DIED;
-        if (false /*completed level*/) {
-            increaseScore(0 /*extra points*/);
+        }
+        if (m_souls >= calcSoulsToSave()) {
+            increaseScore(0 /*extra points*/); // TODO: bonus points
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
@@ -75,6 +78,7 @@ int StudentWorld::move()
     addLostSoulGoodies();
 
     /* Update display text */
+    updateDisplayText();
 
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -155,3 +159,19 @@ void StudentWorld::addLostSoulGoodies() {
         m_actors.push_back(new SoulGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
 }
 #pragma endregion Add Functions
+
+int StudentWorld::calcSoulsToSave() const {
+    return 2 * GameWorld::getLevel() + 5;
+}
+
+void StudentWorld::updateDisplayText() {
+    ostringstream displayOut;
+    displayOut << "Score: " << GameWorld::getScore();
+    displayOut << "  Lvl: " << GameWorld::getLevel();
+    displayOut << "  Souls2Save: " << calcSoulsToSave();
+    displayOut << "  Lives: " << GameWorld::getLives();
+    displayOut << "  Health: " << m_player->getHp();
+    displayOut << "  Sprays: " << m_player->getSprays();
+    displayOut << "  Bonus: "; // TODO: display bonus
+    GameWorld::setGameStatText(displayOut.str());
+}

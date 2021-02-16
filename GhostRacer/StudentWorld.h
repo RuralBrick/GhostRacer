@@ -40,6 +40,8 @@ private:
     //void addHumanPeds();
     void addHolyWaterRefillGoodies();
     void addLostSoulGoodies();
+    int calcSoulsToSave() const;
+    void updateDisplayText();
 };
 
 #endif // STUDENTWORLD_H_
