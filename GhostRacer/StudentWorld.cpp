@@ -148,19 +148,19 @@ void StudentWorld::addRoadMarkers() {
 
 void StudentWorld::addOilSlicks() {
     int chance_oilSlick = max(150 - GameWorld::getLevel() * 10, 40);
-    if (randInt(0, chance_oilSlick) == 0)
+    if (randInt(0, chance_oilSlick - 1) == 0)
         m_actors.push_back(new OilSlick(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
 }
 
 void StudentWorld::addHolyWaterRefillGoodies() {
     int chance_holyWater = 100 + 10 * GameWorld::getLevel();
-    if (randInt(0, chance_holyWater) == 0)
+    if (randInt(0, chance_holyWater - 1) == 0)
         m_actors.push_back(new HolyWaterGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
 }
 
 void StudentWorld::addLostSoulGoodies() {
     int chance_lostSoul = 100;
-    if (randInt(0, chance_lostSoul) == 0)
+    if (randInt(0, chance_lostSoul - 1) == 0)
         m_actors.push_back(new SoulGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
 }
 #pragma endregion Add Functions
