@@ -132,7 +132,7 @@ void GhostRacer::spin() {
 BorderLine* BorderLine::m_lastWhiteBorderLine = nullptr;
 BorderLine::BorderLine(StudentWorld* sw, double x, double y, Color color)
 	: Actor(sw, color == Color::yellow ? IID_YELLOW_BORDER_LINE : IID_WHITE_BORDER_LINE,
-		x, y, 0, 2.0, 1, 0.0, -4.0, true) {
+		x, y, 0, 2.0, 2, 0.0, -4.0, true) {
 	if (color == Color::white)
 		m_lastWhiteBorderLine = this;
 }
@@ -149,8 +149,8 @@ double BorderLine::getLastWhiteBorderLineY() {
 #pragma endregion BorderLine
 
 #pragma region Item
-Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size, unsigned int depth)
-	: Actor(sw, iid, x, y, dir, size, depth, 0.0, -4.0, false) {}
+Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size)
+	: Actor(sw, iid, x, y, dir, size, 2, 0.0, -4.0, false) {}
 
 void Item::doSomething() {
 	Actor::doSomething();
@@ -161,7 +161,7 @@ void Item::doSomething() {
 
 #pragma region Goodie
 Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size)
-	: Item(sw, iid, x, y, dir, size, 2) {}
+	: Item(sw, iid, x, y, dir, size) {}
 
 void Goodie::interactWithGhostRacer() {
 	Actor::die();
@@ -171,7 +171,7 @@ void Goodie::interactWithGhostRacer() {
 
 #pragma region OilSlick
 OilSlick::OilSlick(StudentWorld* sw, double x, double y)
-	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5), 1) {}
+	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5)) {}
 
 void OilSlick::interactWithGhostRacer() {
 	m_sw->playSound(SOUND_OIL_SLICK);
