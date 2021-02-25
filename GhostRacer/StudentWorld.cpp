@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <algorithm>
+#include <math.h>
 using namespace std;
 
 #pragma region Instantiation
@@ -74,7 +75,7 @@ int StudentWorld::move()
 
     /* Add new actors */
     addRoadMarkers();
-    //addZombieCabs();
+    addZombieCabs();
     addOilSlicks();
     addZombiePeds();
     addHumanPeds();
@@ -117,15 +118,6 @@ double StudentWorld::getGhostRacerVertSpeed() const {
     return m_player->getYSpeed();
 }
 
-bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) const {
-    double delta_x = abs(a1->getX() - a2->getX());
-    double delta_y = abs(a1->getY() - a2->getY());
-    double rad_sum = a1->getRadius() + a2->getRadius();
-    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
-        return true;
-    return false;
-}
-
 bool StudentWorld::checkOverlappingGhostRacer(const Actor* other) const {
     return checkOverlap(other, m_player);
 }
@@ -145,6 +137,30 @@ void StudentWorld::healGhostRacer(int health) {
 void StudentWorld::rechargeGhostRacer(int sprays) {
     m_player->addSprays(sprays);
 }
+
+Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, bool inFront) const {
+    Lane lane = getCurrentLane(actor);
+    if (lane == Lane::offroad)
+        return nullptr;
+    Actor* closestActor = nullptr;
+    double closestDist = 999;
+    double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
+    double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
+    for (auto it : m_actors)
+        if (it->isCollisionAvoidanceWorthy() && it->getX() > laneLeft && it->getX() < laneRight
+            && (inFront ? it->getY() > actor->getY() : it->getY() < actor->getY()))
+            if (closestActor != nullptr) {
+                if (calcDist(actor, it) < closestDist) {
+                    closestActor = it;
+                    closestDist = calcDist(actor, closestActor);
+                }
+            }
+            else {
+                closestActor = it;
+                closestDist = calcDist(actor, closestActor);
+            }
+    return closestActor;
+}
 #pragma endregion Other Public Functions
 
 #pragma region Add Functions
@@ -158,6 +174,19 @@ void StudentWorld::addRoadMarkers() {
     if (delta_y >= 4.0 * SPRITE_HEIGHT) {
         m_actors.push_back(new BorderLine(this, LEFT_EDGE + LANE_WIDTH, new_border_y, BorderLine::Color::white));
         m_actors.push_back(new BorderLine(this, RIGHT_EDGE - LANE_WIDTH, new_border_y, BorderLine::Color::white));
+    }
+}
+
+void StudentWorld::addZombieCabs() {
+    int chance_vehicle = max(100 - GameWorld::getLevel() * 10, 20);
+    if (randInt(0, chance_vehicle - 1) == 0) {
+        Lane lane = static_cast<Lane>(randInt(0, 2));
+        for (int n = 0; n < 3; ++n) {
+            Actor* lowestActor = getClosestCollisionAvoidanceWorthyActorInLane(lane);
+            if (lowestActor == nullptr || lowestActor->getY() > VIEW_HEIGHT / 3) {
+
+            }
+        }
     }
 }
 
@@ -193,6 +222,56 @@ void StudentWorld::addLostSoulGoodies() {
 #pragma endregion Add Functions
 
 #pragma region Other Private Functions
+bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) const {
+    double delta_x = abs(a1->getX() - a2->getX());
+    double delta_y = abs(a1->getY() - a2->getY());
+    double rad_sum = a1->getRadius() + a2->getRadius();
+    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
+        return true;
+    return false;
+}
+
+double StudentWorld::calcDist(const Actor* a1, const Actor* a2) const {
+    double dx = a1->getX() - a2->getX();
+    double dy = a1->getY() - a2->getY();
+    return sqrt(dx * dx + dy * dy);
+}
+
+StudentWorld::Lane StudentWorld::getCurrentLane(const Actor* actor) const {
+    if (actor->getX() < LEFT_EDGE)
+        return Lane::offroad;
+    else if (actor->getX() < LEFT_EDGE + LANE_WIDTH)
+        return Lane::left;
+    else if (actor->getX() < LEFT_EDGE + 2 * LANE_WIDTH)
+        return Lane::middle;
+    else if (actor->getX() < LEFT_EDGE + 3 * LANE_WIDTH)
+        return Lane::right;
+    else
+        return Lane::offroad;
+}
+
+Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(Lane lane) const {
+    if (lane == Lane::offroad)
+        return nullptr;
+    Actor* lowestActor = nullptr;
+    double lowestY = 999;
+    double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
+    double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
+    for (auto it : m_actors)
+        if (it->isCollisionAvoidanceWorthy() && it->getX() > laneLeft && it->getX() < laneRight)
+            if (lowestActor != nullptr) {
+                if (it->getY() < lowestY) {
+                    lowestActor = it;
+                    lowestY = lowestActor->getY();
+                }
+            }
+            else {
+                lowestActor = it;
+                lowestY = lowestActor->getY();
+            }
+    return lowestActor;
+}
+
 int StudentWorld::calcSoulsToSave() const {
     return 2 * GameWorld::getLevel() + 5;
 }

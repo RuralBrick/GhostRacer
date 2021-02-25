@@ -13,6 +13,7 @@ class GhostRacer;
 class StudentWorld : public GameWorld
 {
 public:
+    enum class Lane {offroad = -1, left = 0, middle = 1, right = 2};
     StudentWorld(std::string assetPath);
     ~StudentWorld();
     virtual int init();
@@ -29,6 +30,7 @@ public:
     void healGhostRacer(int health);
     void rechargeGhostRacer(int sprays);
     void logHitHuman() { m_hitHuman = true; }
+    Actor* getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, bool inFront) const;
 private:
     GhostRacer* m_player;
     std::list<Actor*> m_actors;
@@ -39,8 +41,11 @@ private:
     int m_bonus;
     bool m_hitHuman;
     bool checkOverlap(const Actor* a1, const Actor* a2) const;
+    double calcDist(const Actor* a1, const Actor* a2) const;
+    Lane getCurrentLane(const Actor* actor) const;
+    Actor* getClosestCollisionAvoidanceWorthyActorInLane(Lane lane) const;
     void addRoadMarkers();
-    //void addZombieCabs();
+    void addZombieCabs();
     void addOilSlicks();
     void addZombiePeds();
     void addHumanPeds();

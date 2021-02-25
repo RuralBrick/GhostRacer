@@ -19,6 +19,7 @@ public:
 	void adjustXSpeed(double speed) { m_xSpeed += speed; }
 	void adjustYSpeed(double speed) { m_ySpeed += speed; }
 	bool isAlive() const { return m_alive; }
+	bool isCollisionAvoidanceWorthy() const { return m_collisionAvoidanceWorthy; }
 	virtual void die();
 protected:
 	StudentWorld* m_sw;
@@ -111,6 +112,21 @@ private:
 	virtual void doDamageEffect();
 	virtual bool interactWithGhostRacer();
 	virtual bool actBeforeMove();
+};
+
+class ZombieCab : public AIActor {
+public:
+	ZombieCab(StudentWorld* sw, double x, double y);
+	static bool checkInFront(double otherY, double cabY);
+	static bool checkBehind(double otherY, double cabY);
+private:
+	bool m_hitGhostRider;
+	virtual void die();
+	virtual void doDamageEffect();
+	virtual bool interactWithGhostRacer();
+	virtual bool actBeforeMove() { return false; }
+	virtual bool actAfterMove();
+	virtual void planMove();
 };
 
 class Item : public Actor {

@@ -135,7 +135,7 @@ void GhostRacer::spin() {
 BorderLine* BorderLine::m_lastWhiteBorderLine = nullptr;
 BorderLine::BorderLine(StudentWorld* sw, double x, double y, Color color)
 	: Actor(sw, color == Color::yellow ? IID_YELLOW_BORDER_LINE : IID_WHITE_BORDER_LINE,
-		x, y, 0, 2.0, 2, 0.0, -4.0, true) {
+		x, y, 0, 2.0, 2, 0.0, -4.0, false) {
 	if (color == Color::white)
 		m_lastWhiteBorderLine = this;
 }
@@ -204,7 +204,8 @@ void HumanPedestrian::doDamageEffect() {
 
 #pragma region ZombiePedestrian
 ZombiePedestrian::ZombiePedestrian(StudentWorld* sw, double x, double y)
-	: Pedestrian(sw, IID_ZOMBIE_PED, x, y, 3.0), m_ticksTillGrunt(0) {}
+	: Pedestrian(sw, IID_ZOMBIE_PED, x, y, 3.0),
+	m_ticksTillGrunt(0) {}
 
 bool ZombiePedestrian::interactWithGhostRacer() {
 	m_sw->damageGhostRacer(5);
@@ -244,7 +245,69 @@ bool ZombiePedestrian::actBeforeMove() {
 #pragma endregion ZombiePedestrian
 
 #pragma region ZombieCab
+ZombieCab::ZombieCab(StudentWorld* sw, double x, double y)
+	: AIActor(sw, IID_ZOMBIE_CAB, x, y, 90, 4.0, 0.0, 0.0, 3, true),
+	m_hitGhostRider(false) {}
 
+bool ZombieCab::interactWithGhostRacer() {
+	if (m_hitGhostRider)
+		return false;
+	m_sw->playSound(SOUND_VEHICLE_CRASH);
+	m_sw->damageGhostRacer(20);
+	if (GraphObject::getX() <= m_sw->getGhostRacerX()) {
+		Actor::setXSpeed(-5);
+		GraphObject::setDirection(120 + randInt(0, 19));
+	}
+	else {
+		Actor::setXSpeed(5);
+		GraphObject::setDirection(60 - randInt(0, 19));
+	}
+	m_hitGhostRider = true;
+	return false;
+}
+
+void ZombieCab::die() {
+	Actor::die();
+	m_sw->playSound(SOUND_VEHICLE_DIE);
+	if (randInt(0, 4) == 0)
+		m_sw->addActor(new OilSlick(m_sw, GraphObject::getX(), GraphObject::getY()));
+	m_sw->increaseScore(200);
+}
+
+void ZombieCab::doDamageEffect() {
+	m_sw->playSound(SOUND_VEHICLE_HURT);
+}
+
+bool ZombieCab::checkInFront(double otherY, double cabY) {
+	return otherY > cabY;
+}
+
+bool ZombieCab::checkBehind(double otherY, double cabY) {
+	return otherY < cabY;
+}
+
+bool ZombieCab::actAfterMove() {
+	if (Actor::getYSpeed() > m_sw->getGhostRacerVertSpeed()) {
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, true);
+		if (closestActor != nullptr && (closestActor->getY() - GraphObject::getY()) < 96) {
+			Actor::adjustYSpeed(-0.5);
+			return true;
+		}
+	}
+	else {
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, false);
+		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96) {
+			Actor::adjustYSpeed(0.5);
+			return true;
+		}
+	}
+	return false;
+}
+
+void ZombieCab::planMove() {
+	m_moveDist = randInt(4, 32);
+	Actor::adjustYSpeed(randInt(-2, 2));
+}
 #pragma endregion ZombieCab
 
 #pragma region Item
