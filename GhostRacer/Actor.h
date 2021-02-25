@@ -24,6 +24,7 @@ protected:
 	StudentWorld* m_sw;
 	bool isOutOfBounds() const;
 	bool isOverlappingGhostRacer() const;
+	bool move();
 private:
 	double m_xSpeed;
 	double m_ySpeed;
@@ -58,7 +59,7 @@ public:
 private:
 	const int MAX_HP = 100;
 	int m_sprays;
-	void move();
+	virtual bool move();
 };
 
 class BorderLine : public Actor {
@@ -71,42 +72,94 @@ private:
 	static BorderLine* m_lastWhiteBorderLine;
 };
 
+class AIActor : public HPActor {
+public:
+	AIActor(StudentWorld* sw, int iid, double x, double y, int dir, double size,
+		double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy);
+	virtual void doSomething();
+protected:
+	virtual bool interactWithGhostRacer() = 0;
+	virtual bool actBeforeMove() = 0;
+	virtual bool actAfterMove() = 0;
+	virtual void planMove() = 0;
+	int m_moveDist;
+};
+
+class Pedestrian : public AIActor {
+public:
+	Pedestrian(StudentWorld* sw, int iid, double x, double y, double size);
+private:
+	virtual bool actAfterMove() { return false; }
+	virtual void planMove();
+};
+
+class HumanPedestrian : public Pedestrian {
+public:
+	HumanPedestrian(StudentWorld* sw, double x, double y);
+private:
+	virtual void doDamageEffect();
+	virtual bool interactWithGhostRacer();
+	virtual bool actBeforeMove() { return false; }
+};
+
+class ZombiePedestrian : public Pedestrian {
+public:
+	ZombiePedestrian(StudentWorld* sw, double x, double y);
+private:
+	int m_ticksTillGrunt;
+	virtual void die();
+	virtual void doDamageEffect();
+	virtual bool interactWithGhostRacer();
+	virtual bool actBeforeMove();
+};
+
 class Item : public Actor {
 public:
 	Item(StudentWorld* sw, int iid, double x, double y, int dir, double size);
 	virtual void doSomething();
+protected:
 	virtual void interactWithGhostRacer() = 0;
+	virtual void doStuffAfter() = 0;
 };
 
 class Goodie : public Item {
 public:
 	Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size);
+protected:
 	virtual void interactWithGhostRacer() = 0;
+	virtual void doStuffAfter() {}
 };
 
 class OilSlick : public Item {
 public:
 	OilSlick(StudentWorld* sw, double x, double y);
+private:
 	virtual void interactWithGhostRacer();
+	virtual void doStuffAfter() {}
 };
 
 class HealingGoodie : public Goodie {
 public:
 	HealingGoodie(StudentWorld* sw, double x, double y);
+private:
 	virtual void interactWithGhostRacer();
+	virtual void doStuffAfter() {}
 };
 
 class HolyWaterGoodie : public Goodie {
 public:
 	HolyWaterGoodie(StudentWorld* sw, double x, double y);
+private:
 	virtual void interactWithGhostRacer();
+	virtual void doStuffAfter() {}
 };
 
 class SoulGoodie : public Goodie {
 public:
 	SoulGoodie(StudentWorld* sw, double x, double y);
-	virtual void doSomething();
+private:
 	virtual void interactWithGhostRacer();
+	virtual void doStuffAfter();
 };
 
 #endif // ACTOR_H_

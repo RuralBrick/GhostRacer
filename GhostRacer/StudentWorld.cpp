@@ -16,7 +16,7 @@ GameWorld* createStudentWorld(string assetPath)
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-: GameWorld(assetPath), m_player(nullptr), m_soulsToSave(0), m_bonus(0)
+: GameWorld(assetPath), m_player(nullptr), m_soulsToSave(0), m_bonus(0), m_hitHuman(false)
 {
 }
 
@@ -30,6 +30,7 @@ int StudentWorld::init()
 {
     m_soulsToSave = calcSoulsToSave();
     m_bonus = 5000;
+    m_hitHuman = false;
     m_player = new GhostRacer(this, 128, 32);
     int N = VIEW_HEIGHT / SPRITE_HEIGHT;
     for (int j = 0; j < N; ++j) {
@@ -51,7 +52,7 @@ int StudentWorld::move()
     for (auto actor : m_actors) {
         if (actor->isAlive())
             actor->doSomething();
-        if (!m_player->isAlive()) {
+        if (!m_player->isAlive() || m_hitHuman) {
             GameWorld::decLives();
             return GWSTATUS_PLAYER_DIED;
         }
@@ -75,8 +76,8 @@ int StudentWorld::move()
     addRoadMarkers();
     //addZombieCabs();
     addOilSlicks();
-    //addZombiePeds();
-    //addHumanPeds();
+    addZombiePeds();
+    addHumanPeds();
     addHolyWaterRefillGoodies();
     addLostSoulGoodies();
 
@@ -100,10 +101,20 @@ void StudentWorld::cleanUp()
 #pragma endregion Required Functions
 
 #pragma region Other Public Functions
+void StudentWorld::addActor(Actor* actor) {
+    m_actors.push_back(actor);
+}
+
+double StudentWorld::getGhostRacerX() const {
+    return m_player->getX();
+}
+
+double StudentWorld::getGhostRacerY() const {
+    return m_player->getY();
+}
+
 double StudentWorld::getGhostRacerVertSpeed() const {
-    if (m_player != nullptr)
-        return m_player->getYSpeed();
-    return 0;
+    return m_player->getYSpeed();
 }
 
 bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) const {
@@ -121,6 +132,10 @@ bool StudentWorld::checkOverlappingGhostRacer(const Actor* other) const {
 
 void StudentWorld::spinGhostRacer() {
     m_player->spin();
+}
+
+void StudentWorld::damageGhostRacer(int damage) {
+    m_player->takeDamage(damage);
 }
 
 void StudentWorld::healGhostRacer(int health) {
@@ -150,6 +165,18 @@ void StudentWorld::addOilSlicks() {
     int chance_oilSlick = max(150 - GameWorld::getLevel() * 10, 40);
     if (randInt(0, chance_oilSlick - 1) == 0)
         m_actors.push_back(new OilSlick(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
+}
+
+void StudentWorld::addZombiePeds() {
+    int chance_zombiePed = max(100 - GameWorld::getLevel() * 10, 20);
+    if (randInt(0, chance_zombiePed - 1) == 0)
+        m_actors.push_back(new ZombiePedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
+}
+
+void StudentWorld::addHumanPeds() {
+    int chance_humanPed = max(200 - GameWorld::getLevel() * 10, 30);
+    if (randInt(0, chance_humanPed - 1) == 0)
+        m_actors.push_back(new HumanPedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
 }
 
 void StudentWorld::addHolyWaterRefillGoodies() {

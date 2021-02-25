@@ -3,6 +3,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <algorithm>
+#include <stdlib.h>
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
@@ -24,14 +25,15 @@ bool Actor::isOverlappingGhostRacer() const {
 	return m_sw->checkOverlappingGhostRacer(this);
 }
 
-void Actor::doSomething() {
+bool Actor::move() {
 	double new_x = GraphObject::getX() + m_xSpeed;
 	double new_y = GraphObject::getY() + m_ySpeed - m_sw->getGhostRacerVertSpeed();
 	GraphObject::moveTo(new_x, new_y);
 	if (isOutOfBounds()) {
 		m_alive = false;
-		return;
+		return true;
 	}
+	return false;
 }
 
 void Actor::die() {
@@ -59,10 +61,11 @@ GhostRacer::GhostRacer(StudentWorld* sw, double x, double y)
 	: HPActor(sw, IID_GHOST_RACER, x, y, 90, 4.0, 0, 0.0, 0.0, 100, true),
 	m_sprays(10) {}
 
-void GhostRacer::move() {
+bool GhostRacer::move() {
 	const double max_shift_per_tick = 4.0;
 	double delta_x = cos(GraphObject::getDirection() * M_PI / 180.0) * max_shift_per_tick;
 	GraphObject::moveTo(GraphObject::getX() + delta_x, GraphObject::getY());
+	return false;
 }
 
 void GhostRacer::die() {
@@ -71,7 +74,7 @@ void GhostRacer::die() {
 }
 
 void GhostRacer::doSomething() {
-	if (!Actor::isAlive() || HPActor::getHp() <= 0)
+	if (!Actor::isAlive())
 		return;
 	if (GraphObject::getX() <= ROAD_CENTER - ROAD_WIDTH / 2.0) {
 		if (GraphObject::getDirection() > 90)
@@ -138,7 +141,7 @@ BorderLine::BorderLine(StudentWorld* sw, double x, double y, Color color)
 }
 
 void BorderLine::doSomething() {
-	Actor::doSomething();
+	Actor::move();
 }
 
 double BorderLine::getLastWhiteBorderLineY() {
@@ -148,14 +151,112 @@ double BorderLine::getLastWhiteBorderLineY() {
 }
 #pragma endregion BorderLine
 
+#pragma region AIActor
+AIActor::AIActor(StudentWorld* sw, int iid, double x, double y, int dir, double size,
+	double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy)
+	: HPActor(sw, iid, x, y, dir, size, 0, xSpeed, ySpeed, hp, collisionAvoidanceWorthy),
+	m_moveDist(0) {}
+
+void AIActor::doSomething() {
+	if (!Actor::isAlive())
+		return;
+	if (Actor::isOverlappingGhostRacer())
+		if (interactWithGhostRacer())
+			return;
+	if (actBeforeMove())
+		return;
+	if (Actor::move())
+		return;
+	if (actAfterMove())
+		return;
+	if (--m_moveDist > 0)
+		return;
+	planMove();
+}
+#pragma endregion AIActor
+
+#pragma region Pedestrian
+Pedestrian::Pedestrian(StudentWorld* sw, int iid, double x, double y, double size)
+	: AIActor(sw, iid, x, y, 0, size, 0.0, -4.0, 2, true) {}
+
+void Pedestrian::planMove() {
+	Actor::setXSpeed(randInt(0, 1) == 0 ? randInt(-3, -1) : randInt(1, 3));
+	m_moveDist = randInt(4, 32);
+	GraphObject::setDirection(Actor::getXSpeed() < 0 ? 180 : 0);
+}
+#pragma endregion Pedestrian
+
+#pragma region HumanPedestrian
+HumanPedestrian::HumanPedestrian(StudentWorld* sw, double x, double y)
+	: Pedestrian(sw, IID_HUMAN_PED, x, y, 2.0) {}
+
+bool HumanPedestrian::interactWithGhostRacer() {
+	m_sw->logHitHuman();
+	return true;
+}
+
+void HumanPedestrian::doDamageEffect() {
+	Actor::setXSpeed(Actor::getXSpeed() * -1);
+	GraphObject::setDirection(GraphObject::getDirection() == 180 ? 0 : 180);
+	m_sw->playSound(SOUND_PED_HURT);
+}
+#pragma endregion HumanPedestrian
+
+#pragma region ZombiePedestrian
+ZombiePedestrian::ZombiePedestrian(StudentWorld* sw, double x, double y)
+	: Pedestrian(sw, IID_ZOMBIE_PED, x, y, 3.0), m_ticksTillGrunt(0) {}
+
+bool ZombiePedestrian::interactWithGhostRacer() {
+	m_sw->damageGhostRacer(5);
+	HPActor::takeDamage(2);
+	return true;
+}
+
+void ZombiePedestrian::die() {
+	Actor::die();
+	m_sw->playSound(SOUND_PED_DIE);
+	if (!Actor::isOverlappingGhostRacer())
+		if (randInt(0, 4) == 0)
+			m_sw->addActor(new HealingGoodie(m_sw, GraphObject::getX(), GraphObject::getY()));
+	m_sw->increaseScore(150);
+}
+
+void ZombiePedestrian::doDamageEffect() {
+	m_sw->playSound(SOUND_PED_HURT);
+}
+
+bool ZombiePedestrian::actBeforeMove() {
+	if (abs(GraphObject::getX() - m_sw->getGhostRacerX()) <= 30 && GraphObject::getY() > m_sw->getGhostRacerY()) {
+		GraphObject::setDirection(270);
+		if (GraphObject::getX() < m_sw->getGhostRacerX())
+			Actor::setXSpeed(1);
+		else if (GraphObject::getX() > m_sw->getGhostRacerX())
+			Actor::setXSpeed(-1);
+		else
+			Actor::setXSpeed(0);
+		if (--m_ticksTillGrunt <= 0) {
+			m_sw->playSound(SOUND_ZOMBIE_ATTACK);
+			m_ticksTillGrunt = 20;
+		}
+	}
+	return false;
+}
+#pragma endregion ZombiePedestrian
+
+#pragma region ZombieCab
+
+#pragma endregion ZombieCab
+
 #pragma region Item
 Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size)
 	: Actor(sw, iid, x, y, dir, size, 2, 0.0, -4.0, false) {}
 
 void Item::doSomething() {
-	Actor::doSomething();
+	if (Actor::move())
+		return;
 	if (isOverlappingGhostRacer())
 		interactWithGhostRacer();
+	doStuffAfter();
 }
 #pragma endregion Item
 
@@ -212,8 +313,7 @@ void SoulGoodie::interactWithGhostRacer() {
 	m_sw->increaseScore(100);
 }
 
-void SoulGoodie::doSomething() {
-	Item::doSomething();
+void SoulGoodie::doStuffAfter() {
 	GraphObject::setDirection(GraphObject::getDirection() - 10);
 }
 #pragma endregion SoulGoodie

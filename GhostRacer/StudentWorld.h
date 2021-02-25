@@ -18,12 +18,17 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    void addActor(Actor* actor);
     void saveSoul() { --m_soulsToSave; }
+    double getGhostRacerX() const;
+    double getGhostRacerY() const;
     double getGhostRacerVertSpeed() const;
     bool checkOverlappingGhostRacer(const Actor* other) const;
     void spinGhostRacer();
+    void damageGhostRacer(int damage);
     void healGhostRacer(int health);
     void rechargeGhostRacer(int sprays);
+    void logHitHuman() { m_hitHuman = true; }
 private:
     GhostRacer* m_player;
     std::list<Actor*> m_actors;
@@ -32,12 +37,13 @@ private:
     const int LANE_WIDTH = ROAD_WIDTH / 3;
     int m_soulsToSave;
     int m_bonus;
+    bool m_hitHuman;
     bool checkOverlap(const Actor* a1, const Actor* a2) const;
     void addRoadMarkers();
     //void addZombieCabs();
     void addOilSlicks();
-    //void addZombiePeds();
-    //void addHumanPeds();
+    void addZombiePeds();
+    void addHumanPeds();
     void addHolyWaterRefillGoodies();
     void addLostSoulGoodies();
     int calcSoulsToSave() const;
