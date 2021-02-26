@@ -57,8 +57,8 @@ int StudentWorld::move()
             return GWSTATUS_PLAYER_DIED;
         }
         if (m_soulsToSave <= 0) {
-            increaseScore(m_bonus);
-            playSound(SOUND_FINISHED_LEVEL);
+            GameWorld::increaseScore(m_bonus);
+            GameWorld::playSound(SOUND_FINISHED_LEVEL);
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
