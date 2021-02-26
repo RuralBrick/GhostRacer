@@ -9,6 +9,7 @@
 
 class Actor;
 class GhostRacer;
+class HolyWaterProjectile;
 
 class StudentWorld : public GameWorld
 {
@@ -35,6 +36,7 @@ public:
     void logHitHuman() { m_hitHuman = true; }
     template<typename Class, typename F1, typename F2>
         Actor* getClosestCollisionAvoidanceWorthyActorInLane(const Class caller, Lane lane, F1 calcDist, F2 filter) const;
+    Actor* getFirstOverlappingSprayableActor(const HolyWaterProjectile* projectile) const;
 private:
     static const int LEFT_EDGE = ROAD_CENTER - ROAD_WIDTH / 2;
     static const int RIGHT_EDGE = ROAD_CENTER + ROAD_WIDTH / 2;

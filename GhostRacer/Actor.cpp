@@ -8,10 +8,10 @@
 
 #pragma region Actor
 Actor::Actor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth,
-	double xSpeed, double ySpeed, bool collisionAvoidanceWorthy)
+	double xSpeed, double ySpeed, bool collisionAvoidanceWorthy, bool sprayable)
 	: GraphObject(imageID, x, y, dir, size, depth), 
 	m_sw(sw), m_xSpeed(xSpeed), m_ySpeed(ySpeed), m_alive(true), 
-	m_collisionAvoidanceWorthy(collisionAvoidanceWorthy) {}
+	m_collisionAvoidanceWorthy(collisionAvoidanceWorthy), m_sprayable(sprayable) {}
 
 bool Actor::isOutOfBounds() const {
 	if (GraphObject::getX() < 0 || GraphObject::getX() > VIEW_WIDTH
@@ -41,9 +41,9 @@ void Actor::die() {
 #pragma endregion Actor
 
 #pragma region HPActor
-HPActor::HPActor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth,
-	double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy)
-	: Actor(sw, imageID, x, y, dir, size, depth, xSpeed, ySpeed, collisionAvoidanceWorthy),
+HPActor::HPActor(StudentWorld* sw, int imageID, double x, double y, int dir, double size,
+	double xSpeed, double ySpeed, int hp, bool sprayable)
+	: Actor(sw, imageID, x, y, dir, size, 0, xSpeed, ySpeed, true, sprayable),
 	m_hp(hp) {}
 
 void HPActor::takeDamage(int damage) {
@@ -57,7 +57,7 @@ void HPActor::takeDamage(int damage) {
 
 #pragma region GhostRacer
 GhostRacer::GhostRacer(StudentWorld* sw, double x, double y)
-	: HPActor(sw, IID_GHOST_RACER, x, y, 90, 4.0, 0, 0.0, 0.0, 100, true),
+	: HPActor(sw, IID_GHOST_RACER, x, y, 90, 4.0, 0.0, 0.0, 100, false),
 	m_sprays(10) {}
 
 bool GhostRacer::move() {
@@ -91,8 +91,12 @@ void GhostRacer::doSomething() {
 	}
 	int key;
 	if (m_sw->getKey(key)) {
-		if (key == KEY_PRESS_SPACE) {
-			// TODO: shoot holy water
+		if (key == KEY_PRESS_SPACE && m_sprays >= 1) {
+			double x = GraphObject::getX() + SPRITE_HEIGHT * std::cos(GraphObject::getDirection() * M_PI / 180.0);
+			double y = GraphObject::getY() + SPRITE_HEIGHT * std::sin(GraphObject::getDirection() * M_PI / 180.0);
+			m_sw->addActor(new HolyWaterProjectile(m_sw, x, y, GraphObject::getDirection()));
+			m_sw->playSound(SOUND_PLAYER_SPRAY);
+			--m_sprays;
 			goto lbl_move;
 		}
 		if (key == KEY_PRESS_LEFT && GraphObject::getDirection() < 114) {
@@ -134,7 +138,7 @@ void GhostRacer::spin() {
 BorderLine* BorderLine::m_lastWhiteBorderLine = nullptr;
 BorderLine::BorderLine(StudentWorld* sw, double x, double y, Color color)
 	: Actor(sw, color == Color::yellow ? IID_YELLOW_BORDER_LINE : IID_WHITE_BORDER_LINE,
-		x, y, 0, 2.0, 2, 0.0, -4.0, false) {
+		x, y, 0, 2.0, 2, 0.0, -4.0, false, false) {
 	if (color == Color::white)
 		m_lastWhiteBorderLine = this;
 }
@@ -152,8 +156,8 @@ double BorderLine::getLastWhiteBorderLineY() {
 
 #pragma region AIActor
 AIActor::AIActor(StudentWorld* sw, int iid, double x, double y, int dir, double size,
-	double xSpeed, double ySpeed, int hp, bool collisionAvoidanceWorthy)
-	: HPActor(sw, iid, x, y, dir, size, 0, xSpeed, ySpeed, hp, collisionAvoidanceWorthy),
+	double xSpeed, double ySpeed, int hp)
+	: HPActor(sw, iid, x, y, dir, size, xSpeed, ySpeed, hp, true),
 	m_moveDist(0) {}
 
 void AIActor::doSomething() {
@@ -176,7 +180,7 @@ void AIActor::doSomething() {
 
 #pragma region Pedestrian
 Pedestrian::Pedestrian(StudentWorld* sw, int iid, double x, double y, double size)
-	: AIActor(sw, iid, x, y, 0, size, 0.0, -4.0, 2, true) {}
+	: AIActor(sw, iid, x, y, 0, size, 0.0, -4.0, 2) {}
 
 void Pedestrian::planMove() {
 	Actor::setXSpeed(randInt(0, 1) == 0 ? randInt(-3, -1) : randInt(1, 3));
@@ -198,6 +202,10 @@ void HumanPedestrian::doDamageEffect() {
 	Actor::setXSpeed(Actor::getXSpeed() * -1);
 	GraphObject::setDirection(GraphObject::getDirection() == 180 ? 0 : 180);
 	m_sw->playSound(SOUND_PED_HURT);
+}
+
+void HumanPedestrian::getSprayed(int damage) {
+	doDamageEffect();
 }
 #pragma endregion HumanPedestrian
 
@@ -241,11 +249,15 @@ bool ZombiePedestrian::actBeforeMove() {
 	}
 	return false;
 }
+
+void ZombiePedestrian::getSprayed(int damage) {
+	HPActor::takeDamage(damage);
+}
 #pragma endregion ZombiePedestrian
 
 #pragma region ZombieCab
 ZombieCab::ZombieCab(StudentWorld* sw, double x, double y, double ySpeed)
-	: AIActor(sw, IID_ZOMBIE_CAB, x, y, 90, 4.0, 0.0, ySpeed, 3, true),
+	: AIActor(sw, IID_ZOMBIE_CAB, x, y, 90, 4.0, 0.0, ySpeed, 3),
 	m_hitGhostRider(false) {}
 
 bool ZombieCab::interactWithGhostRacer() {
@@ -313,11 +325,15 @@ void ZombieCab::planMove() {
 	m_moveDist = randInt(4, 32);
 	Actor::adjustYSpeed(randInt(-2, 2));
 }
+
+void ZombieCab::getSprayed(int damage) {
+	HPActor::takeDamage(damage);
+}
 #pragma endregion ZombieCab
 
 #pragma region Item
-Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size)
-	: Actor(sw, iid, x, y, dir, size, 2, 0.0, -4.0, false) {}
+Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size, bool sprayable)
+	: Actor(sw, iid, x, y, dir, size, 2, 0.0, -4.0, false, sprayable) {}
 
 void Item::doSomething() {
 	if (Actor::move())
@@ -328,19 +344,9 @@ void Item::doSomething() {
 }
 #pragma endregion Item
 
-#pragma region Goodie
-Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size)
-	: Item(sw, iid, x, y, dir, size) {}
-
-void Goodie::interactWithGhostRacer() {
-	Actor::die();
-	m_sw->playSound(SOUND_GOT_GOODIE);
-}
-#pragma endregion Goodie
-
 #pragma region OilSlick
 OilSlick::OilSlick(StudentWorld* sw, double x, double y)
-	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5)) {}
+	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5), false) {}
 
 void OilSlick::interactWithGhostRacer() {
 	m_sw->playSound(SOUND_OIL_SLICK);
@@ -348,31 +354,49 @@ void OilSlick::interactWithGhostRacer() {
 }
 #pragma endregion OilSlick
 
+#pragma region Goodie
+Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size, bool sprayable)
+	: Item(sw, iid, x, y, dir, size, sprayable) {}
+
+void Goodie::interactWithGhostRacer() {
+	Actor::die();
+	m_sw->playSound(SOUND_GOT_GOODIE);
+}
+#pragma endregion Goodie
+
 #pragma region HealingGoodie
 HealingGoodie::HealingGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_HEAL_GOODIE, x, y, 0, 1.0) {}
+	: Goodie(sw, IID_HEAL_GOODIE, x, y, 0, 1.0, true) {}
 
 void HealingGoodie::interactWithGhostRacer() {
 	m_sw->healGhostRacer(10);
 	Goodie::interactWithGhostRacer();
 	m_sw->increaseScore(250);
 }
+
+void HealingGoodie::getSprayed(int damage) {
+	Actor::die();
+}
 #pragma endregion HealingGoodie
 
 #pragma region HolyWaterGoodie
 HolyWaterGoodie::HolyWaterGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_HOLY_WATER_GOODIE, x, y, 90, 2.0) {}
+	: Goodie(sw, IID_HOLY_WATER_GOODIE, x, y, 90, 2.0, true) {}
 
 void HolyWaterGoodie::interactWithGhostRacer() {
 	m_sw->rechargeGhostRacer(10);
 	Goodie::interactWithGhostRacer();
 	m_sw->increaseScore(50);
 }
+
+void HolyWaterGoodie::getSprayed(int damage) {
+	Actor::die();
+}
 #pragma endregion HolyWaterGoodie
 
 #pragma region SoulGoodie
 SoulGoodie::SoulGoodie(StudentWorld* sw, double x, double y)
-	: Goodie(sw, IID_SOUL_GOODIE, x, y, 0, 4.0) {}
+	: Goodie(sw, IID_SOUL_GOODIE, x, y, 0, 4.0, false) {}
 
 void SoulGoodie::interactWithGhostRacer() {
 	m_sw->saveSoul();
@@ -385,3 +409,24 @@ void SoulGoodie::doStuffAfter() {
 	GraphObject::setDirection(GraphObject::getDirection() - 10);
 }
 #pragma endregion SoulGoodie
+
+#pragma region HolyWaterProjectile
+HolyWaterProjectile::HolyWaterProjectile(StudentWorld* sw, double x, double y, int dir)
+	: Actor(sw, IID_HOLY_WATER_PROJECTILE, x, y, dir, 1.0, 1, 0.0, 0.0, false, false),
+	m_travelDist(160) {}
+
+void HolyWaterProjectile::doSomething() {
+	if (!Actor::isAlive())
+		return;
+	Actor* hitActor = m_sw->getFirstOverlappingSprayableActor(this);
+	if (hitActor != nullptr) {
+		hitActor->getSprayed(1);
+		Actor::die();
+		return;
+	}
+	GraphObject::moveForward(SPRITE_HEIGHT);
+	m_travelDist -= SPRITE_HEIGHT;
+	if (Actor::isOutOfBounds() || m_travelDist <= 0)
+		Actor::die();
+}
+#pragma endregion HolyWaterProjectile

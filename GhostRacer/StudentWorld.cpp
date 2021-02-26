@@ -189,15 +189,6 @@ void StudentWorld::addLostSoulGoodies() {
 #pragma endregion Add Functions
 
 #pragma region Other Functions
-bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) {
-    double delta_x = abs(a1->getX() - a2->getX());
-    double delta_y = abs(a1->getY() - a2->getY());
-    double rad_sum = a1->getRadius() + a2->getRadius();
-    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
-        return true;
-    return false;
-}
-
 double StudentWorld::calcDist(const Actor* a1, const Actor* a2) {
     double dx = a1->getX() - a2->getX();
     double dy = a1->getY() - a2->getY();
@@ -215,6 +206,22 @@ StudentWorld::Lane StudentWorld::getCurrentLane(const Actor* actor) {
         return Lane::right;
     else
         return Lane::offroad;
+}
+
+bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) {
+    double delta_x = abs(a1->getX() - a2->getX());
+    double delta_y = abs(a1->getY() - a2->getY());
+    double rad_sum = a1->getRadius() + a2->getRadius();
+    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
+        return true;
+    return false;
+}
+
+Actor* StudentWorld::getFirstOverlappingSprayableActor(const HolyWaterProjectile* projectile) const {
+    for (auto actor : m_actors)
+        if (checkOverlap(projectile, actor) && actor->isSprayable())
+            return actor;
+    return nullptr;
 }
 
 bool StudentWorld::returnTrue(double a) const {
