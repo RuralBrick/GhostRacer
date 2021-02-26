@@ -21,12 +21,12 @@ bool Actor::isOutOfBounds() const {
 }
 
 bool Actor::isOverlappingGhostRacer() const {
-	return m_sw->checkOverlappingGhostRacer(this);
+	return Actor::getWorld()->checkOverlappingGhostRacer(this);
 }
 
 bool Actor::move() {
 	double new_x = GraphObject::getX() + m_xSpeed;
-	double new_y = GraphObject::getY() + m_ySpeed - m_sw->getGhostRacerVertSpeed();
+	double new_y = GraphObject::getY() + m_ySpeed - Actor::getWorld()->getGhostRacerVertSpeed();
 	GraphObject::moveTo(new_x, new_y);
 	if (isOutOfBounds()) {
 		m_alive = false;
@@ -69,7 +69,7 @@ bool GhostRacer::move() {
 
 void GhostRacer::die() {
 	Actor::die();
-	m_sw->playSound(SOUND_PLAYER_DIE);
+	Actor::getWorld()->playSound(SOUND_PLAYER_DIE);
 }
 
 void GhostRacer::doSomething() {
@@ -79,23 +79,23 @@ void GhostRacer::doSomething() {
 		if (GraphObject::getDirection() > 90)
 			HPActor::takeDamage(10);
 		GraphObject::setDirection(82);
-		m_sw->playSound(SOUND_VEHICLE_CRASH);
+		Actor::getWorld()->playSound(SOUND_VEHICLE_CRASH);
 		goto lbl_move;
 	}
 	if (GraphObject::getX() >= ROAD_CENTER + ROAD_WIDTH / 2.0) {
 		if (GraphObject::getDirection() < 90)
 			HPActor::takeDamage(10);
 		GraphObject::setDirection(98);
-		m_sw->playSound(SOUND_VEHICLE_CRASH);
+		Actor::getWorld()->playSound(SOUND_VEHICLE_CRASH);
 		goto lbl_move;
 	}
 	int key;
-	if (m_sw->getKey(key)) {
+	if (Actor::getWorld()->getKey(key)) {
 		if (key == KEY_PRESS_SPACE && m_sprays >= 1) {
 			double x = GraphObject::getX() + SPRITE_HEIGHT * std::cos(GraphObject::getDirection() * M_PI / 180.0);
 			double y = GraphObject::getY() + SPRITE_HEIGHT * std::sin(GraphObject::getDirection() * M_PI / 180.0);
-			m_sw->addActor(new HolyWaterProjectile(m_sw, x, y, GraphObject::getDirection()));
-			m_sw->playSound(SOUND_PLAYER_SPRAY);
+			Actor::getWorld()->addActor(new HolyWaterProjectile(Actor::getWorld(), x, y, GraphObject::getDirection()));
+			Actor::getWorld()->playSound(SOUND_PLAYER_SPRAY);
 			--m_sprays;
 			goto lbl_move;
 		}
@@ -184,7 +184,7 @@ Pedestrian::Pedestrian(StudentWorld* sw, int iid, double x, double y, double siz
 
 void Pedestrian::planMove() {
 	Actor::setXSpeed(randInt(0, 1) == 0 ? randInt(-3, -1) : randInt(1, 3));
-	m_moveDist = randInt(4, 32);
+	AIActor::setMoveDist(randInt(4, 32));
 	GraphObject::setDirection(Actor::getXSpeed() < 0 ? 180 : 0);
 }
 #pragma endregion Pedestrian
@@ -194,14 +194,14 @@ HumanPedestrian::HumanPedestrian(StudentWorld* sw, double x, double y)
 	: Pedestrian(sw, IID_HUMAN_PED, x, y, 2.0) {}
 
 bool HumanPedestrian::interactWithGhostRacer() {
-	m_sw->logHitHuman();
+	Actor::getWorld()->logHitHuman();
 	return true;
 }
 
 void HumanPedestrian::doDamageEffect() {
 	Actor::setXSpeed(Actor::getXSpeed() * -1);
 	GraphObject::setDirection(GraphObject::getDirection() == 180 ? 0 : 180);
-	m_sw->playSound(SOUND_PED_HURT);
+	Actor::getWorld()->playSound(SOUND_PED_HURT);
 }
 
 void HumanPedestrian::getSprayed(int damage) {
@@ -215,35 +215,35 @@ ZombiePedestrian::ZombiePedestrian(StudentWorld* sw, double x, double y)
 	m_ticksTillGrunt(0) {}
 
 bool ZombiePedestrian::interactWithGhostRacer() {
-	m_sw->damageGhostRacer(5);
+	Actor::getWorld()->damageGhostRacer(5);
 	HPActor::takeDamage(2);
 	return true;
 }
 
 void ZombiePedestrian::die() {
 	Actor::die();
-	m_sw->playSound(SOUND_PED_DIE);
+	Actor::getWorld()->playSound(SOUND_PED_DIE);
 	if (!Actor::isOverlappingGhostRacer())
 		if (randInt(0, 4) == 0)
-			m_sw->addActor(new HealingGoodie(m_sw, GraphObject::getX(), GraphObject::getY()));
-	m_sw->increaseScore(150);
+			Actor::getWorld()->addActor(new HealingGoodie(Actor::getWorld(), GraphObject::getX(), GraphObject::getY()));
+	Actor::getWorld()->increaseScore(150);
 }
 
 void ZombiePedestrian::doDamageEffect() {
-	m_sw->playSound(SOUND_PED_HURT);
+	Actor::getWorld()->playSound(SOUND_PED_HURT);
 }
 
 bool ZombiePedestrian::actBeforeMove() {
-	if (std::abs(GraphObject::getX() - m_sw->getGhostRacerX()) <= 30 && GraphObject::getY() > m_sw->getGhostRacerY()) {
+	if (std::abs(GraphObject::getX() - Actor::getWorld()->getGhostRacerX()) <= 30 && GraphObject::getY() > Actor::getWorld()->getGhostRacerY()) {
 		GraphObject::setDirection(270);
-		if (GraphObject::getX() < m_sw->getGhostRacerX())
+		if (GraphObject::getX() < Actor::getWorld()->getGhostRacerX())
 			Actor::setXSpeed(1);
-		else if (GraphObject::getX() > m_sw->getGhostRacerX())
+		else if (GraphObject::getX() > Actor::getWorld()->getGhostRacerX())
 			Actor::setXSpeed(-1);
 		else
 			Actor::setXSpeed(0);
 		if (--m_ticksTillGrunt <= 0) {
-			m_sw->playSound(SOUND_ZOMBIE_ATTACK);
+			Actor::getWorld()->playSound(SOUND_ZOMBIE_ATTACK);
 			m_ticksTillGrunt = 20;
 		}
 	}
@@ -263,9 +263,9 @@ ZombieCab::ZombieCab(StudentWorld* sw, double x, double y, double ySpeed)
 bool ZombieCab::interactWithGhostRacer() {
 	if (m_hitGhostRider)
 		return false;
-	m_sw->playSound(SOUND_VEHICLE_CRASH);
-	m_sw->damageGhostRacer(20);
-	if (GraphObject::getX() <= m_sw->getGhostRacerX()) {
+	Actor::getWorld()->playSound(SOUND_VEHICLE_CRASH);
+	Actor::getWorld()->damageGhostRacer(20);
+	if (GraphObject::getX() <= Actor::getWorld()->getGhostRacerX()) {
 		Actor::setXSpeed(-5);
 		GraphObject::setDirection(120 + randInt(0, 19));
 	}
@@ -279,18 +279,18 @@ bool ZombieCab::interactWithGhostRacer() {
 
 void ZombieCab::die() {
 	Actor::die();
-	m_sw->playSound(SOUND_VEHICLE_DIE);
+	Actor::getWorld()->playSound(SOUND_VEHICLE_DIE);
 	if (randInt(0, 4) == 0)
-		m_sw->addActor(new OilSlick(m_sw, GraphObject::getX(), GraphObject::getY()));
-	m_sw->increaseScore(200);
+		Actor::getWorld()->addActor(new OilSlick(Actor::getWorld(), GraphObject::getX(), GraphObject::getY()));
+	Actor::getWorld()->increaseScore(200);
 }
 
 void ZombieCab::doDamageEffect() {
-	m_sw->playSound(SOUND_VEHICLE_HURT);
+	Actor::getWorld()->playSound(SOUND_VEHICLE_HURT);
 }
 
 double ZombieCab::calcDist(const Actor* other) {
-	return m_sw->calcDist(this, other);
+	return Actor::getWorld()->calcDist(this, other);
 }
 
 bool ZombieCab::checkInFront(double y) {
@@ -302,18 +302,18 @@ bool ZombieCab::checkBehind(double y) {
 }
 
 bool ZombieCab::actAfterMove() {
-	if (Actor::getYSpeed() > m_sw->getGhostRacerVertSpeed()) {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(
-			this, m_sw->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkInFront);
+	if (Actor::getYSpeed() > Actor::getWorld()->getGhostRacerVertSpeed()) {
+		Actor* closestActor = Actor::getWorld()->getClosestCollisionAvoidanceWorthyActorInLane(
+			this, Actor::getWorld()->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkInFront);
 		if (closestActor != nullptr && (closestActor->getY() - GraphObject::getY()) < 96) {
 			Actor::adjustYSpeed(-0.5);
 			return true;
 		}
 	}
 	else {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(
-			this, m_sw->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkBehind);
-		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96 && !m_sw->isGhostRacer(closestActor)) {
+		Actor* closestActor = Actor::getWorld()->getClosestCollisionAvoidanceWorthyActorInLane(
+			this, Actor::getWorld()->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkBehind);
+		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96 && !Actor::getWorld()->isGhostRacer(closestActor)) {
 			Actor::adjustYSpeed(0.5);
 			return true;
 		}
@@ -322,7 +322,7 @@ bool ZombieCab::actAfterMove() {
 }
 
 void ZombieCab::planMove() {
-	m_moveDist = randInt(4, 32);
+	AIActor::setMoveDist(randInt(4, 32));
 	Actor::adjustYSpeed(randInt(-2, 2));
 }
 
@@ -349,8 +349,8 @@ OilSlick::OilSlick(StudentWorld* sw, double x, double y)
 	: Item(sw, IID_OIL_SLICK, x, y, 0, randInt(2, 5), false) {}
 
 void OilSlick::interactWithGhostRacer() {
-	m_sw->playSound(SOUND_OIL_SLICK);
-	m_sw->spinGhostRacer();
+	Actor::getWorld()->playSound(SOUND_OIL_SLICK);
+	Actor::getWorld()->spinGhostRacer();
 }
 #pragma endregion OilSlick
 
@@ -360,7 +360,7 @@ Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double si
 
 void Goodie::interactWithGhostRacer() {
 	Actor::die();
-	m_sw->playSound(SOUND_GOT_GOODIE);
+	Actor::getWorld()->playSound(SOUND_GOT_GOODIE);
 }
 #pragma endregion Goodie
 
@@ -369,9 +369,9 @@ HealingGoodie::HealingGoodie(StudentWorld* sw, double x, double y)
 	: Goodie(sw, IID_HEAL_GOODIE, x, y, 0, 1.0, true) {}
 
 void HealingGoodie::interactWithGhostRacer() {
-	m_sw->healGhostRacer(10);
+	Actor::getWorld()->healGhostRacer(10);
 	Goodie::interactWithGhostRacer();
-	m_sw->increaseScore(250);
+	Actor::getWorld()->increaseScore(250);
 }
 
 void HealingGoodie::getSprayed(int damage) {
@@ -384,9 +384,9 @@ HolyWaterGoodie::HolyWaterGoodie(StudentWorld* sw, double x, double y)
 	: Goodie(sw, IID_HOLY_WATER_GOODIE, x, y, 90, 2.0, true) {}
 
 void HolyWaterGoodie::interactWithGhostRacer() {
-	m_sw->rechargeGhostRacer(10);
+	Actor::getWorld()->rechargeGhostRacer(10);
 	Goodie::interactWithGhostRacer();
-	m_sw->increaseScore(50);
+	Actor::getWorld()->increaseScore(50);
 }
 
 void HolyWaterGoodie::getSprayed(int damage) {
@@ -399,10 +399,10 @@ SoulGoodie::SoulGoodie(StudentWorld* sw, double x, double y)
 	: Goodie(sw, IID_SOUL_GOODIE, x, y, 0, 4.0, false) {}
 
 void SoulGoodie::interactWithGhostRacer() {
-	m_sw->saveSoul();
+	Actor::getWorld()->saveSoul();
 	Actor::die();
-	m_sw->playSound(SOUND_GOT_SOUL);
-	m_sw->increaseScore(100);
+	Actor::getWorld()->playSound(SOUND_GOT_SOUL);
+	Actor::getWorld()->increaseScore(100);
 }
 
 void SoulGoodie::doStuffAfter() {
@@ -418,7 +418,7 @@ HolyWaterProjectile::HolyWaterProjectile(StudentWorld* sw, double x, double y, i
 void HolyWaterProjectile::doSomething() {
 	if (!Actor::isAlive())
 		return;
-	Actor* hitActor = m_sw->getFirstOverlappingSprayableActor(this);
+	Actor* hitActor = Actor::getWorld()->getFirstOverlappingSprayableActor(this);
 	if (hitActor != nullptr) {
 		hitActor->getSprayed(1);
 		Actor::die();
