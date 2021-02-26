@@ -58,6 +58,7 @@ int StudentWorld::move()
         }
         if (m_soulsToSave <= 0) {
             increaseScore(m_bonus);
+            playSound(SOUND_FINISHED_LEVEL);
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
@@ -100,7 +101,134 @@ void StudentWorld::cleanUp()
 }
 #pragma endregion Required Functions
 
-#pragma region Other Public Functions
+#pragma region Add Functions
+void StudentWorld::addRoadMarkers() {
+    double new_border_y = VIEW_HEIGHT - SPRITE_HEIGHT;
+    double delta_y = new_border_y - BorderLine::getLastWhiteBorderLineY();
+    if (delta_y >= SPRITE_HEIGHT) {
+        m_actors.push_back(new BorderLine(this, LEFT_EDGE, new_border_y, BorderLine::Color::yellow));
+        m_actors.push_back(new BorderLine(this, RIGHT_EDGE, new_border_y, BorderLine::Color::yellow));
+    }
+    if (delta_y >= 4.0 * SPRITE_HEIGHT) {
+        m_actors.push_back(new BorderLine(this, LEFT_EDGE + LANE_WIDTH, new_border_y, BorderLine::Color::white));
+        m_actors.push_back(new BorderLine(this, RIGHT_EDGE - LANE_WIDTH, new_border_y, BorderLine::Color::white));
+    }
+}
+
+void StudentWorld::addZombieCabs() {
+    int chance_vehicle = max(100 - GameWorld::getLevel() * 10, 20);
+    if (randInt(0, chance_vehicle - 1) == 0) {
+        Lane lane = static_cast<Lane>(randInt(0, 2));
+        int n;
+        double x, y, ySpeed;
+        for (n = 0; n < 3; ++n) {
+            Actor* lowestActor = getClosestCollisionAvoidanceWorthyActorInLane(
+                this, lane, &StudentWorld::calcDistFromBottom, &StudentWorld::returnTrue);
+            if (lowestActor == nullptr || lowestActor->getY() > (VIEW_HEIGHT / 3)) {
+                y = SPRITE_HEIGHT / 2;
+                ySpeed = m_player->getYSpeed() + randInt(2, 4);
+                break;
+            }
+            Actor* highestActor = getClosestCollisionAvoidanceWorthyActorInLane(
+                this, lane, &StudentWorld::calcDistFromTop, &StudentWorld::returnTrue);
+            if (lowestActor == nullptr || lowestActor->getY() < (VIEW_HEIGHT * 2. / 3)) {
+                y = VIEW_HEIGHT - SPRITE_HEIGHT / 2;
+                ySpeed = m_player->getYSpeed() - randInt(2, 4);
+                break;
+            }
+            lane = static_cast<Lane>((static_cast<int>(lane) + 1) % 3);
+        }
+        if (n == 3)
+            return;
+        switch (lane) {
+        case Lane::middle:
+            x = ROAD_CENTER;
+            break;
+        case Lane::left:
+            x = ROAD_CENTER - ROAD_WIDTH / 3;
+            break;
+        case Lane::right:
+            x = ROAD_CENTER + ROAD_WIDTH / 3;
+            break;
+        default:
+            return;
+        }
+        m_actors.push_back(new ZombieCab(this, x, y, ySpeed));
+    }
+}
+
+void StudentWorld::addOilSlicks() {
+    int chance_oilSlick = max(150 - GameWorld::getLevel() * 10, 40);
+    if (randInt(0, chance_oilSlick - 1) == 0)
+        m_actors.push_back(new OilSlick(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
+}
+
+void StudentWorld::addZombiePeds() {
+    int chance_zombiePed = max(100 - GameWorld::getLevel() * 10, 20);
+    if (randInt(0, chance_zombiePed - 1) == 0)
+        m_actors.push_back(new ZombiePedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
+}
+
+void StudentWorld::addHumanPeds() {
+    int chance_humanPed = max(200 - GameWorld::getLevel() * 10, 30);
+    if (randInt(0, chance_humanPed - 1) == 0)
+        m_actors.push_back(new HumanPedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
+}
+
+void StudentWorld::addHolyWaterRefillGoodies() {
+    int chance_holyWater = 100 + 10 * GameWorld::getLevel();
+    if (randInt(0, chance_holyWater - 1) == 0)
+        m_actors.push_back(new HolyWaterGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
+}
+
+void StudentWorld::addLostSoulGoodies() {
+    int chance_lostSoul = 100;
+    if (randInt(0, chance_lostSoul - 1) == 0)
+        m_actors.push_back(new SoulGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
+}
+#pragma endregion Add Functions
+
+#pragma region Other Functions
+bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) {
+    double delta_x = abs(a1->getX() - a2->getX());
+    double delta_y = abs(a1->getY() - a2->getY());
+    double rad_sum = a1->getRadius() + a2->getRadius();
+    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
+        return true;
+    return false;
+}
+
+double StudentWorld::calcDist(const Actor* a1, const Actor* a2) {
+    double dx = a1->getX() - a2->getX();
+    double dy = a1->getY() - a2->getY();
+    return sqrt(dx * dx + dy * dy);
+}
+
+StudentWorld::Lane StudentWorld::getCurrentLane(const Actor* actor) {
+    if (actor->getX() < LEFT_EDGE)
+        return Lane::offroad;
+    else if (actor->getX() < LEFT_EDGE + LANE_WIDTH)
+        return Lane::left;
+    else if (actor->getX() < LEFT_EDGE + 2 * LANE_WIDTH)
+        return Lane::middle;
+    else if (actor->getX() < LEFT_EDGE + 3 * LANE_WIDTH)
+        return Lane::right;
+    else
+        return Lane::offroad;
+}
+
+bool StudentWorld::returnTrue(double a) const {
+    return true;
+}
+
+double StudentWorld::calcDistFromBottom(const Actor* actor) const {
+    return abs(actor->getY());
+}
+
+double StudentWorld::calcDistFromTop(const Actor* actor) const {
+    return abs(VIEW_HEIGHT - actor->getY());
+}
+
 void StudentWorld::addActor(Actor* actor) {
     m_actors.push_back(actor);
 }
@@ -136,116 +264,6 @@ void StudentWorld::healGhostRacer(int health) {
 void StudentWorld::rechargeGhostRacer(int sprays) {
     m_player->addSprays(sprays);
 }
-#pragma endregion Other Public Functions
-
-#pragma region Add Functions
-void StudentWorld::addRoadMarkers() {
-    double new_border_y = VIEW_HEIGHT - SPRITE_HEIGHT;
-    double delta_y = new_border_y - BorderLine::getLastWhiteBorderLineY();
-    if (delta_y >= SPRITE_HEIGHT) {
-        m_actors.push_back(new BorderLine(this, LEFT_EDGE, new_border_y, BorderLine::Color::yellow));
-        m_actors.push_back(new BorderLine(this, RIGHT_EDGE, new_border_y, BorderLine::Color::yellow));
-    }
-    if (delta_y >= 4.0 * SPRITE_HEIGHT) {
-        m_actors.push_back(new BorderLine(this, LEFT_EDGE + LANE_WIDTH, new_border_y, BorderLine::Color::white));
-        m_actors.push_back(new BorderLine(this, RIGHT_EDGE - LANE_WIDTH, new_border_y, BorderLine::Color::white));
-    }
-}
-
-void StudentWorld::addZombieCabs() {
-    int chance_vehicle = max(100 - GameWorld::getLevel() * 10, 20);
-    if (randInt(0, chance_vehicle - 1) == 0) {
-        Lane lane = static_cast<Lane>(randInt(0, 2));
-        for (int n = 0; n < 3; ++n) {
-            Actor* lowestActor = getClosestCollisionAvoidanceWorthyActorInLane(lane);
-            if (lowestActor == nullptr || lowestActor->getY() > VIEW_HEIGHT / 3) {
-
-            }
-        }
-    }
-}
-
-void StudentWorld::addOilSlicks() {
-    int chance_oilSlick = max(150 - GameWorld::getLevel() * 10, 40);
-    if (randInt(0, chance_oilSlick - 1) == 0)
-        m_actors.push_back(new OilSlick(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
-}
-
-void StudentWorld::addZombiePeds() {
-    int chance_zombiePed = max(100 - GameWorld::getLevel() * 10, 20);
-    if (randInt(0, chance_zombiePed - 1) == 0)
-        m_actors.push_back(new ZombiePedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
-}
-
-void StudentWorld::addHumanPeds() {
-    int chance_humanPed = max(200 - GameWorld::getLevel() * 10, 30);
-    if (randInt(0, chance_humanPed - 1) == 0)
-        m_actors.push_back(new HumanPedestrian(this, randInt(0, VIEW_WIDTH), VIEW_HEIGHT));
-}
-
-void StudentWorld::addHolyWaterRefillGoodies() {
-    int chance_holyWater = 100 + 10 * GameWorld::getLevel();
-    if (randInt(0, chance_holyWater - 1) == 0)
-        m_actors.push_back(new HolyWaterGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
-}
-
-void StudentWorld::addLostSoulGoodies() {
-    int chance_lostSoul = 100;
-    if (randInt(0, chance_lostSoul - 1) == 0)
-        m_actors.push_back(new SoulGoodie(this, randInt(LEFT_EDGE, RIGHT_EDGE), VIEW_HEIGHT));
-}
-#pragma endregion Add Functions
-
-#pragma region Other Private Functions
-bool StudentWorld::checkOverlap(const Actor* a1, const Actor* a2) const {
-    double delta_x = abs(a1->getX() - a2->getX());
-    double delta_y = abs(a1->getY() - a2->getY());
-    double rad_sum = a1->getRadius() + a2->getRadius();
-    if (delta_x < rad_sum * 0.25 && delta_y < rad_sum * 0.6)
-        return true;
-    return false;
-}
-
-double StudentWorld::calcDist(const Actor* a1, const Actor* a2) const {
-    double dx = a1->getX() - a2->getX();
-    double dy = a1->getY() - a2->getY();
-    return sqrt(dx * dx + dy * dy);
-}
-
-StudentWorld::Lane StudentWorld::getCurrentLane(const Actor* actor) const {
-    if (actor->getX() < LEFT_EDGE)
-        return Lane::offroad;
-    else if (actor->getX() < LEFT_EDGE + LANE_WIDTH)
-        return Lane::left;
-    else if (actor->getX() < LEFT_EDGE + 2 * LANE_WIDTH)
-        return Lane::middle;
-    else if (actor->getX() < LEFT_EDGE + 3 * LANE_WIDTH)
-        return Lane::right;
-    else
-        return Lane::offroad;
-}
-
-Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(Lane lane) const {
-    if (lane == Lane::offroad)
-        return nullptr;
-    Actor* lowestActor = nullptr;
-    double lowestY = 999;
-    double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
-    double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
-    for (auto it : m_actors)
-        if (it->isCollisionAvoidanceWorthy() && it->getX() > laneLeft && it->getX() < laneRight)
-            if (lowestActor != nullptr) {
-                if (it->getY() < lowestY) {
-                    lowestActor = it;
-                    lowestY = lowestActor->getY();
-                }
-            }
-            else {
-                lowestActor = it;
-                lowestY = lowestActor->getY();
-            }
-    return lowestActor;
-}
 
 int StudentWorld::calcSoulsToSave() const {
     return 2 * GameWorld::getLevel() + 5;
@@ -262,4 +280,4 @@ void StudentWorld::updateDisplayText() {
     displayOut << "  Bonus: " << m_bonus;
     GameWorld::setGameStatText(displayOut.str());
 }
-#pragma endregion Other Private Functions
+#pragma endregion Other Functions

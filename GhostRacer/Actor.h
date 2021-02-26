@@ -116,9 +116,7 @@ private:
 
 class ZombieCab : public AIActor {
 public:
-	ZombieCab(StudentWorld* sw, double x, double y);
-	static bool checkInFront(double otherY, double cabY);
-	static bool checkBehind(double otherY, double cabY);
+	ZombieCab(StudentWorld* sw, double x, double y, double ySpeed);
 private:
 	bool m_hitGhostRider;
 	virtual void die();
@@ -127,6 +125,9 @@ private:
 	virtual bool actBeforeMove() { return false; }
 	virtual bool actAfterMove();
 	virtual void planMove();
+	double calcDist(const Actor* other);
+	bool checkInFront(double y);
+	bool checkBehind(double y);
 };
 
 class Item : public Actor {
