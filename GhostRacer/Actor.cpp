@@ -1,9 +1,8 @@
+#define _USE_MATH_DEFINES
 #include "Actor.h"
 #include "StudentWorld.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 #include <algorithm>
-#include <stdlib.h>
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
@@ -63,7 +62,7 @@ GhostRacer::GhostRacer(StudentWorld* sw, double x, double y)
 
 bool GhostRacer::move() {
 	const double max_shift_per_tick = 4.0;
-	double delta_x = cos(GraphObject::getDirection() * M_PI / 180.0) * max_shift_per_tick;
+	double delta_x = std::cos(GraphObject::getDirection() * M_PI / 180.0) * max_shift_per_tick;
 	GraphObject::moveTo(GraphObject::getX() + delta_x, GraphObject::getY());
 	return false;
 }
@@ -227,7 +226,7 @@ void ZombiePedestrian::doDamageEffect() {
 }
 
 bool ZombiePedestrian::actBeforeMove() {
-	if (abs(GraphObject::getX() - m_sw->getGhostRacerX()) <= 30 && GraphObject::getY() > m_sw->getGhostRacerY()) {
+	if (std::abs(GraphObject::getX() - m_sw->getGhostRacerX()) <= 30 && GraphObject::getY() > m_sw->getGhostRacerY()) {
 		GraphObject::setDirection(270);
 		if (GraphObject::getX() < m_sw->getGhostRacerX())
 			Actor::setXSpeed(1);

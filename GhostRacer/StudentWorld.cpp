@@ -3,9 +3,8 @@
 #include "Actor.h"
 #include <string>
 #include <sstream>
-#include <stdlib.h>
+#include <cmath>
 #include <algorithm>
-#include <math.h>
 using namespace std;
 
 #pragma region Instantiation

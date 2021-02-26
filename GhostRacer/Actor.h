@@ -159,7 +159,6 @@ public:
 	HealingGoodie(StudentWorld* sw, double x, double y);
 private:
 	virtual void interactWithGhostRacer();
-	virtual void doStuffAfter() {}
 };
 
 class HolyWaterGoodie : public Goodie {
@@ -167,7 +166,6 @@ public:
 	HolyWaterGoodie(StudentWorld* sw, double x, double y);
 private:
 	virtual void interactWithGhostRacer();
-	virtual void doStuffAfter() {}
 };
 
 class SoulGoodie : public Goodie {
