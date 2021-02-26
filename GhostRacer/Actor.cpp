@@ -244,8 +244,8 @@ bool ZombiePedestrian::actBeforeMove() {
 #pragma endregion ZombiePedestrian
 
 #pragma region ZombieCab
-ZombieCab::ZombieCab(StudentWorld* sw, double x, double y)
-	: AIActor(sw, IID_ZOMBIE_CAB, x, y, 90, 4.0, 0.0, 0.0, 3, true),
+ZombieCab::ZombieCab(StudentWorld* sw, double x, double y, double ySpeed)
+	: AIActor(sw, IID_ZOMBIE_CAB, x, y, 90, 4.0, 0.0, ySpeed, 3, true),
 	m_hitGhostRider(false) {}
 
 bool ZombieCab::interactWithGhostRacer() {
@@ -277,25 +277,31 @@ void ZombieCab::doDamageEffect() {
 	m_sw->playSound(SOUND_VEHICLE_HURT);
 }
 
-bool ZombieCab::checkInFront(double otherY, double cabY) {
-	return otherY > cabY;
+double ZombieCab::calcDist(const Actor* other) {
+	return m_sw->calcDist(this, other);
 }
 
-bool ZombieCab::checkBehind(double otherY, double cabY) {
-	return otherY < cabY;
+bool ZombieCab::checkInFront(double y) {
+	return y > GraphObject::getY();
+}
+
+bool ZombieCab::checkBehind(double y) {
+	return y < GraphObject::getY();
 }
 
 bool ZombieCab::actAfterMove() {
 	if (Actor::getYSpeed() > m_sw->getGhostRacerVertSpeed()) {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, ZombieCab::checkInFront);
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(
+			this, m_sw->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkInFront);
 		if (closestActor != nullptr && (closestActor->getY() - GraphObject::getY()) < 96) {
 			Actor::adjustYSpeed(-0.5);
 			return true;
 		}
 	}
 	else {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, ZombieCab::checkBehind);
-		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96) {
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(
+			this, m_sw->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkBehind);
+		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96 && !m_sw->isGhostRacer(closestActor)) {
 			Actor::adjustYSpeed(0.5);
 			return true;
 		}
