@@ -47,6 +47,7 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+    // Let each actor do something
     if (m_player->isAlive())
         m_player->doSomething();
     for (auto actor : m_actors) {
@@ -63,6 +64,7 @@ int StudentWorld::move()
         }
     }
 
+    // Delete dead actors
     list<Actor*>::iterator it = m_actors.begin();
     while (it != m_actors.end()) {
         if (!(*it)->isAlive()) {
@@ -73,7 +75,7 @@ int StudentWorld::move()
             ++it;
     }
 
-    /* Add new actors */
+    // Add new actors
     addRoadMarkers();
     addZombieCabs();
     addOilSlicks();
@@ -82,7 +84,7 @@ int StudentWorld::move()
     addHolyWaterRefillGoodies();
     addLostSoulGoodies();
 
-    /* Update display text */
+    // Update display text and misc stats
     updateDisplayText();
     if (m_bonus > 0)
         --m_bonus;
@@ -136,9 +138,11 @@ void StudentWorld::addZombieCabs() {
                 ySpeed = m_player->getYSpeed() - randInt(2, 4);
                 break;
             }
+            // Move to next lane, incorporating looping to front
             lane = static_cast<Lane>((static_cast<int>(lane) + 1) % 3);
         }
         if (n == 3)
+            // None of the lanes were selected, so loop not broken out early
             return;
         switch (lane) {
         case Lane::middle:
@@ -224,6 +228,7 @@ Actor* StudentWorld::getFirstOverlappingSprayableActor(const HolyWaterProjectile
     return nullptr;
 }
 
+// Dummy filter function for getClosestCollisionAvoidanceWorthyActorInLane
 bool StudentWorld::returnTrue(double a) const {
     return true;
 }

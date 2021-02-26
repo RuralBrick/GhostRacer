@@ -63,4 +63,9 @@
       <UniqueIdentifier>{9a4641e0-b9a8-45c9-916b-17f33ac5f1a2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="report.txt">
+      <Filter>Turn In</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

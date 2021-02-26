@@ -24,6 +24,7 @@ bool Actor::isOverlappingGhostRacer() const {
 	return Actor::getWorld()->checkOverlappingGhostRacer(this);
 }
 
+// Returns bool to tell caller to return
 bool Actor::move() {
 	double new_x = GraphObject::getX() + m_xSpeed;
 	double new_y = GraphObject::getY() + m_ySpeed - Actor::getWorld()->getGhostRacerVertSpeed();
@@ -161,6 +162,7 @@ AIActor::AIActor(StudentWorld* sw, int iid, double x, double y, int dir, double 
 	m_moveDist(0) {}
 
 void AIActor::doSomething() {
+	// Check if need to return after each step
 	if (!Actor::isAlive())
 		return;
 	if (Actor::isOverlappingGhostRacer())
@@ -234,7 +236,8 @@ void ZombiePedestrian::doDamageEffect() {
 }
 
 bool ZombiePedestrian::actBeforeMove() {
-	if (std::abs(GraphObject::getX() - Actor::getWorld()->getGhostRacerX()) <= 30 && GraphObject::getY() > Actor::getWorld()->getGhostRacerY()) {
+	if (std::abs(GraphObject::getX() - Actor::getWorld()->getGhostRacerX()) <= 30
+		&& GraphObject::getY() > Actor::getWorld()->getGhostRacerY()) {
 		GraphObject::setDirection(270);
 		if (GraphObject::getX() < Actor::getWorld()->getGhostRacerX())
 			Actor::setXSpeed(1);
@@ -303,6 +306,7 @@ bool ZombieCab::checkBehind(double y) {
 
 bool ZombieCab::actAfterMove() {
 	if (Actor::getYSpeed() > Actor::getWorld()->getGhostRacerVertSpeed()) {
+		// Get closest actor in front
 		Actor* closestActor = Actor::getWorld()->getClosestCollisionAvoidanceWorthyActorInLane(
 			this, Actor::getWorld()->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkInFront);
 		if (closestActor != nullptr && (closestActor->getY() - GraphObject::getY()) < 96) {
@@ -311,6 +315,7 @@ bool ZombieCab::actAfterMove() {
 		}
 	}
 	else {
+		// Get closest actor behind
 		Actor* closestActor = Actor::getWorld()->getClosestCollisionAvoidanceWorthyActorInLane(
 			this, Actor::getWorld()->getCurrentLane(this), &ZombieCab::calcDist, &ZombieCab::checkBehind);
 		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96 && !Actor::getWorld()->isGhostRacer(closestActor)) {

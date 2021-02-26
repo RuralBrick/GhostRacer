@@ -61,6 +61,7 @@ private:
     double calcDistFromTop(const Actor* actor) const;
 };
 
+// Get Actor in selected lane with shortest dist calculated from calcDist that passes filter
 template <typename Class, typename F1, typename F2>
 Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Class caller, Lane lane, F1 calcDist, F2 filter) const {
     if (lane == Lane::offroad)
@@ -69,6 +70,7 @@ Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Class c
     double closestDist = 999;
     double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
     double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
+    // Check if player is in selected lane and passes filter, and get dist if so
     if (m_player->getX() >= laneLeft && m_player->getX() < laneRight && (caller->*filter)(m_player->getY())) {
         closestActor = m_player;
         closestDist = (caller->*calcDist)(closestActor);
