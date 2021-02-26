@@ -30,7 +30,7 @@ public:
     void healGhostRacer(int health);
     void rechargeGhostRacer(int sprays);
     void logHitHuman() { m_hitHuman = true; }
-    Actor* getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, bool inFront) const;
+    template<typename F> Actor* getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, F filter) const;
 private:
     GhostRacer* m_player;
     std::list<Actor*> m_actors;
@@ -55,4 +55,31 @@ private:
     void updateDisplayText();
 };
 
+template <typename F>
+Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, F filter) const {
+    Lane lane = getCurrentLane(actor);
+    if (lane == Lane::offroad)
+        return nullptr;
+    Actor* closestActor = nullptr;
+    double closestDist = 999;
+    double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
+    double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
+    for (auto other : m_actors) {
+        if (other->isCollisionAvoidanceWorthy() && other->getX() > laneLeft && other->getX() < laneRight 
+            && filter(other->getY(), actor->getY())) {
+            if (closestActor != nullptr) {
+                double currDist = calcDist(actor, other);
+                if (currDist < closestDist) {
+                    closestActor = other;
+                    closestDist = currDist;
+                }
+            }
+            else {
+                closestActor = other;
+                closestDist = calcDist(actor, closestActor);
+            }
+        }
+    }
+    return closestActor;
+}
 #endif // STUDENTWORLD_H_

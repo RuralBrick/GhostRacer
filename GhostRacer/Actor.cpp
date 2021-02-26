@@ -288,14 +288,14 @@ bool ZombieCab::checkBehind(double otherY, double cabY) {
 
 bool ZombieCab::actAfterMove() {
 	if (Actor::getYSpeed() > m_sw->getGhostRacerVertSpeed()) {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, true);
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, ZombieCab::checkInFront);
 		if (closestActor != nullptr && (closestActor->getY() - GraphObject::getY()) < 96) {
 			Actor::adjustYSpeed(-0.5);
 			return true;
 		}
 	}
 	else {
-		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, false);
+		Actor* closestActor = m_sw->getClosestCollisionAvoidanceWorthyActorInLane(this, ZombieCab::checkBehind);
 		if (closestActor != nullptr && (GraphObject::getY() - closestActor->getY()) < 96) {
 			Actor::adjustYSpeed(0.5);
 			return true;

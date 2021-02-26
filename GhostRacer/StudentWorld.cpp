@@ -137,30 +137,6 @@ void StudentWorld::healGhostRacer(int health) {
 void StudentWorld::rechargeGhostRacer(int sprays) {
     m_player->addSprays(sprays);
 }
-
-Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Actor* actor, bool inFront) const {
-    Lane lane = getCurrentLane(actor);
-    if (lane == Lane::offroad)
-        return nullptr;
-    Actor* closestActor = nullptr;
-    double closestDist = 999;
-    double laneLeft = LEFT_EDGE + LANE_WIDTH * static_cast<int>(lane);
-    double laneRight = LEFT_EDGE + LANE_WIDTH * (1 + static_cast<int>(lane));
-    for (auto it : m_actors)
-        if (it->isCollisionAvoidanceWorthy() && it->getX() > laneLeft && it->getX() < laneRight
-            && (inFront ? it->getY() > actor->getY() : it->getY() < actor->getY()))
-            if (closestActor != nullptr) {
-                if (calcDist(actor, it) < closestDist) {
-                    closestActor = it;
-                    closestDist = calcDist(actor, closestActor);
-                }
-            }
-            else {
-                closestActor = it;
-                closestDist = calcDist(actor, closestActor);
-            }
-    return closestActor;
-}
 #pragma endregion Other Public Functions
 
 #pragma region Add Functions
