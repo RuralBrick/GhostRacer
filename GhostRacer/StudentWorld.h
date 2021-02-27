@@ -19,9 +19,9 @@ public:
     static Lane getCurrentLane(const Actor* actor);
     StudentWorld(std::string assetPath);
     ~StudentWorld();
-    virtual int init();
-    virtual int move();
-    virtual void cleanUp();
+    int init();
+    int move();
+    void cleanUp();
     void addActor(Actor* actor);
     void saveSoul() { --m_soulsToSave; }
     double isGhostRacer(const Actor* actor) { return actor == (Actor*)m_player; }
