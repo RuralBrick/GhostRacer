@@ -133,7 +133,7 @@ void StudentWorld::addZombieCabs() {
             }
             Actor* highestActor = getClosestCollisionAvoidanceWorthyActorInLane(
                 this, lane, &StudentWorld::calcDistFromTop, &StudentWorld::returnTrue);
-            if (lowestActor == nullptr || lowestActor->getY() < (VIEW_HEIGHT * 2. / 3)) {
+            if (highestActor == nullptr || highestActor->getY() < (VIEW_HEIGHT * 2. / 3)) {
                 y = VIEW_HEIGHT - SPRITE_HEIGHT / 2;
                 ySpeed = m_player->getYSpeed() - randInt(2, 4);
                 break;
