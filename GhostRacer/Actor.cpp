@@ -24,7 +24,7 @@ bool Actor::isOverlappingGhostRacer() const {
 	return Actor::getWorld()->checkOverlappingGhostRacer(this);
 }
 
-// Returns bool to tell caller to return
+// Returns bool to tell caller if to return
 bool Actor::move() {
 	double new_x = GraphObject::getX() + m_xSpeed;
 	double new_y = GraphObject::getY() + m_ySpeed - Actor::getWorld()->getGhostRacerVertSpeed();
