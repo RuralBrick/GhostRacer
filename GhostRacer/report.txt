@@ -1,10 +1,165 @@
 # Public Member Function Descriptions
 
+## static double StudentWorld::calcDist(const Actor* a1, const Actor* a2)
+Returns the distance between the Actors' xy coordinates.
+
+## static Lane StudentWorld::getCurrentLane(const Actor* actor)
+Returns the lane the Actor is in based on its x coordinate.
+
+## StudentWorld::StudentWorld(std::string assetPath)
+Constructor
+
+## StudentWorld::~StudentWorld()
+Destructor
+
+## int StudentWorld::init()
+Sets souls to save, time bonus, and hitHuman variables. Creates ghost 
+racer and first border lines.
+
+## int StudentWorld::move()
+Allows actors to act, deletes dead actors, adds new actors, and updates 
+game stats.
+
+## void StudentWorld::cleanUp()
+Deletes all dynamically allocated Actors.
+
+## void StudentWorld::addActor(Actor* actor)
+Adds dynamically allocated Actor to list.
+
+## void StudentWorld::saveSoul()
+Decrements souls to save.
+
+## double StudentWorld::isGhostRacer(const Actor* actor)
+Compares pointer to ghost racer pointer.
+
+## double StudentWorld::getGhostRacerX() const
+Returns ghost racer's x coordinate.
+
+## double StudentWorld::getGhostRacerY() const
+Returns ghost racer's y coordinate.
+
+## double StudentWorld::getGhostRacerVertSpeed() const
+Returns ghost racer's y velocity.
+
+## bool StudentWorld::checkOverlappingGhostRacer(const Actor* other) const
+Uses given collision algorithm between ghost racer and actor.
+
+## void StudentWorld::spinGhostRacer()
+Tells ghost racer to spin.
+
+## void StudentWorld::damageGhostRacer(int damage)
+Tells ghost racer to lower hp.
+
+## void StudentWorld::healGhostRacer(int health)
+Tells ghost racer to increase hp.
+
+## void StudentWorld::rechargeGhostRacer(int sprays)
+Tells ghost racer to increase spray count.
+
+## void StudentWorld::logHitHuman()
+Cause the round to terminate at next check.
+
+## template<typename Class, typename F1, typename F2> Actor* StudentWorld::getClosestCollisionAvoidanceWorthyActorInLane(const Class caller, Lane lane, F1 calcDist, F2 filter) const
+Templated for ZombieCab to check for closest Actor in front or back, and 
+for StudentWorld to check topmost or bottommost actor.
+Pseudocode:
+if ghost racer is in lane and passes filter (ZombieCab's check for in front/behind):
+	set closest actor to ghost racer
+for each actor in world:
+	if in lane, passes filter, and is closer than the current closest actor:
+		set closest actor to actor
+return closest actor, or nullptr if none found
+
+## Actor* StudentWorld::getFirstOverlappingSprayableActor(const HolyWaterProjectile* projectile) const
+Gives HolyWaterProjectile an Actor to activate on.
+
+
+## Actor::Actor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, unsigned int depth, double xSpeed, double ySpeed, bool collisionAvoidanceWorthy, bool sprayable)
+Constructor
+
+## virtual void Actor::doSomething() = 0
+Set pure virtual because all derived Actors have to doSomething unique.
+
+## double Actor::getXSpeed() const
+Returns actor's x velocity.
+
+## double Actor::getYSpeed() const
+Returns actor's y velocity.
+
+## bool Actor::isAlive() const
+Returns actor's alive state.
+
+## bool Actor::isCollisionAvoidanceWorthy() const
+Returns actor's collision worthy status.
+
+## bool Actor::isSprayable() const
+Returns actor's sprayable status.
+
+## virtual void Actor::getSprayed(int damage) = 0
+Allow all Actors to be sprayable, just in case, but leave implementations 
+to individual classes.
+
+
+## HPActor::HPActor(StudentWorld* sw, int imageID, double x, double y, int dir, double size, double xSpeed, double ySpeed, int hp, bool sprayable)
+Constructor
+
+## int HPActor::getHp() const
+Returns actor's hp.
+
+## void HPActor::takeDamage(int damage)
+Reduces hp by amount of damage, and either die or play damage effect 
+depending on remaining hp.
+
+
+## GhostRacer::GhostRacer(StudentWorld* sw, double x, double y)
+Constructor
+
+## void GhostRacer::doSomething()
+Implements border line collision, player input, and movement.
+
+## void GhostRacer::healDamage(int health)
+Allows HealingGoodies to reverse ghost racer damage.
+
+## int GhostRacer::getSprays()
+Returns ghost racer's spray count.
+
+## void GhostRacer::addSprays(int sprays)
+Increment spray count by specified amount.
+
+## void GhostRacer::spin()
+Make ghost racer lose control.
+
+
+## static double BorderLine::getLastWhiteBorderLineY()
+Return the y coordinate of the last white BorderLine created.
+
+## BorderLine::BorderLine(StudentWorld* sw, double x, double y, Color color)
+Constructor. Sets lastWhiteBorderLine to self if color is white.
+
+
+## AIActor::AIActor(StudentWorld* sw, int iid, double x, double y, int dir, double size,	double xSpeed, double ySpeed, int hp)
+## Pedestrian::Pedestrian(StudentWorld* sw, int iid, double x, double y, double size)
+## HumanPedestrian::HumanPedestrian(StudentWorld* sw, double x, double y)
+## ZombiePedestrian::ZombiePedestrian(StudentWorld* sw, double x, double y)
+## ZombieCab::ZombieCab(StudentWorld* sw, double x, double y, double ySpeed)
+## Item::Item(StudentWorld* sw, int iid, double x, double y, int dir, double size, bool sprayable)
+## OilSlick::OilSlick(StudentWorld* sw, double x, double y)
+## Goodie::Goodie(StudentWorld* sw, int iid, double x, double y, int dir, double size, bool sprayable)
+## HealingGoodie::HealingGoodie(StudentWorld* sw, double x, double y)
+## HolyWaterGoodie::HolyWaterGoodie(StudentWorld* sw, double x, double y)
+## SoulGoodie::SoulGoodie(StudentWorld* sw, double x, double y)
+## HolyWaterProjectile::HolyWaterProjectile(StudentWorld* sw, double x, double y, int dir)
+Constructors
 
 
 # Incomplete Functionality / Bugs
-
-
+* Game ran noticably slower after implementing `ZombieCab`, but it now 
+  matches the sample exe's speed closer.
 
 # Design Decisions / Assumptions
-
+* The spec did not explicitly ban `static`, `enum`, and `goto`, but I 
+  found them beneficial so I used them.
+* The spec only mentions to play `SOUND_FINISHED_LEVEL` when first listing 
+  all the sounds, but not within the `StudentWorld` specifications. I also 
+  did not hear it in the sample exe, I think, but I decided to include it 
+  immediately before `StudentWorld` returns `GWSTATUS_FINISHED_LEVEL`.
