@@ -53,7 +53,7 @@ private:
 class GhostRacer : public HPActor {
 public:
 	GhostRacer(StudentWorld* sw, double x, double y);
-	virtual void doSomething();
+	void doSomething();
 	void healDamage(int health);
 	int getSprays() { return m_sprays; }
 	void addSprays(int sprays) { m_sprays += sprays; }
@@ -61,10 +61,10 @@ public:
 private:
 	const int MAX_HP = 100;
 	int m_sprays;
-	virtual bool move();
-	virtual void die();
-	virtual void doDamageEffect() {}
-	virtual void getSprayed(int damage) {}
+	bool move();
+	void die();
+	void doDamageEffect() {}
+	void getSprayed(int damage) {}
 };
 
 class BorderLine : public Actor {
@@ -74,8 +74,8 @@ public:
 	BorderLine(StudentWorld* sw, double x, double y, Color color);
 private:
 	static BorderLine* m_lastWhiteBorderLine;
-	virtual void doSomething();
-	virtual void getSprayed(int damage) {}
+	void doSomething();
+	void getSprayed(int damage) {}
 };
 
 class AIActor : public HPActor {
@@ -97,7 +97,7 @@ class Pedestrian : public AIActor {
 public:
 	Pedestrian(StudentWorld* sw, int iid, double x, double y, double size);
 private:
-	virtual bool actAfterMove() { return false; }
+	bool actAfterMove() { return false; }
 	virtual void planMove();
 };
 
@@ -105,10 +105,10 @@ class HumanPedestrian : public Pedestrian {
 public:
 	HumanPedestrian(StudentWorld* sw, double x, double y);
 private:
-	virtual void doDamageEffect();
-	virtual bool interactWithGhostRacer();
-	virtual bool actBeforeMove() { return false; }
-	virtual void getSprayed(int damage);
+	void doDamageEffect();
+	bool interactWithGhostRacer();
+	bool actBeforeMove() { return false; }
+	void getSprayed(int damage);
 };
 
 class ZombiePedestrian : public Pedestrian {
@@ -116,11 +116,11 @@ public:
 	ZombiePedestrian(StudentWorld* sw, double x, double y);
 private:
 	int m_ticksTillGrunt;
-	virtual void die();
-	virtual void doDamageEffect();
-	virtual bool interactWithGhostRacer();
-	virtual bool actBeforeMove();
-	virtual void getSprayed(int damage);
+	void die();
+	void doDamageEffect();
+	bool interactWithGhostRacer();
+	bool actBeforeMove();
+	void getSprayed(int damage);
 };
 
 class ZombieCab : public AIActor {
@@ -128,16 +128,16 @@ public:
 	ZombieCab(StudentWorld* sw, double x, double y, double ySpeed);
 private:
 	bool m_hitGhostRider;
-	virtual void die();
-	virtual void doDamageEffect();
-	virtual bool interactWithGhostRacer();
-	virtual bool actBeforeMove() { return false; }
-	virtual bool actAfterMove();
-	virtual void planMove();
+	void die();
+	void doDamageEffect();
+	bool interactWithGhostRacer();
+	bool actBeforeMove() { return false; }
+	bool actAfterMove();
+	void planMove();
 	double calcDist(const Actor* other);
 	bool checkInFront(double y);
 	bool checkBehind(double y);
-	virtual void getSprayed(int damage);
+	void getSprayed(int damage);
 };
 
 class Item : public Actor {
@@ -153,9 +153,9 @@ class OilSlick : public Item {
 public:
 	OilSlick(StudentWorld* sw, double x, double y);
 private:
-	virtual void interactWithGhostRacer();
-	virtual void doStuffAfter() {}
-	virtual void getSprayed(int damage) {}
+	void interactWithGhostRacer();
+	void doStuffAfter() {}
+	void getSprayed(int damage) {}
 };
 
 class Goodie : public Item {
@@ -164,32 +164,32 @@ public:
 protected:
 	virtual void interactWithGhostRacer();
 private:
-	virtual void doStuffAfter() {}
+	void doStuffAfter() {}
 };
 
 class HealingGoodie : public Goodie {
 public:
 	HealingGoodie(StudentWorld* sw, double x, double y);
 private:
-	virtual void interactWithGhostRacer();
-	virtual void getSprayed(int damage);
+	void interactWithGhostRacer();
+	void getSprayed(int damage);
 };
 
 class HolyWaterGoodie : public Goodie {
 public:
 	HolyWaterGoodie(StudentWorld* sw, double x, double y);
 private:
-	virtual void interactWithGhostRacer();
-	virtual void getSprayed(int damage);
+	void interactWithGhostRacer();
+	void getSprayed(int damage);
 };
 
 class SoulGoodie : public Goodie {
 public:
 	SoulGoodie(StudentWorld* sw, double x, double y);
 private:
-	virtual void interactWithGhostRacer();
-	virtual void doStuffAfter();
-	virtual void getSprayed(int damage) {}
+	void interactWithGhostRacer();
+	void doStuffAfter();
+	void getSprayed(int damage) {}
 };
 
 class HolyWaterProjectile : public Actor {
@@ -197,8 +197,8 @@ public:
 	HolyWaterProjectile(StudentWorld* sw, double x, double y, int dir);
 private:
 	double m_travelDist;
-	virtual void doSomething();
-	virtual void getSprayed(int damage) {}
+	void doSomething();
+	void getSprayed(int damage) {}
 };
 
 #endif // ACTOR_H_
